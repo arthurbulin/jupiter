@@ -1,0 +1,20 @@
+#Input files
+*.in
+*.inc
+*.man
+
+#Binary files
+*.pyc
+mercury6
+mercury6_g2
+element6
+close6
+*.o
+
+#Packages
+*.zip
+*.tar
+
+#Random things
+*.save
+*.save.*
