@@ -5,23 +5,21 @@
 import numpy as np
 import math
 import os
+import lib_merc as lme
 
-ind_names = range(10)
-for i in ind_names:
-	ind_names[i] = str(i)
-	
-absw = '/home/bulin/Mercury/'
+#Assign global variables witihin the script
+ind_names = lme.lib_ind_names()
+absw = lme.lib_get_absw()
 
-def get_stats(lookin):
+def main(lookin):
 	data = dict()
 	for i in xrange(len(lookin)):
 		print 'For ' + lookin[i]
-		folders = get_dir(lookin[i])
+		folders = lme.lib_get_dir(lookin[i])
 		folders.sort()
-		noaei = need_aei(lookin[i],folders)
-#		print noaei
+		noaei = lme.lib_need_aei(lookin[i],folders)
 		if noaei:
-			unpack(lookin[i],noaei)
+			lme.lib_unpack(lookin[i],noaei)
 		sets = dict()
 		for j in xrange(len(folders)):
 			
@@ -32,54 +30,10 @@ def get_stats(lookin):
 			for thing in aeifiles:
 				call_fmft(lookin[i]+'/'+folders[j],thing,6,1)
 				call_fmft(lookin[i]+'/'+folders[j],thing,6,2)
-#		data[lookin[i]] = sets
-		#data.append([lookin[i],sets])
-#	return data
 
-#################################################
-#	Navigate, check for aei, unpack		#
-#################################################
-
-#get a list of Dir inside targe directory
-def get_dir(where):
-	folders = []	#Initialize list
-#	print '1'
-	print absw + where
-	contents = os.listdir(absw + where) #Get contents
-	for i in xrange(len(contents)): #Iterate over contents
-#		print '2'
-		if os.path.isfile(absw + where +'/'+ contents[i]) != True: #If not a file, so if dir
-#			print '3'
-			if contents[i] in ind_names: #If a directory that matches my name format
-#				print '4'
-				folders.append(contents[i]) #Append
-	return folders 
-	
-#Determine what I need unpacked
-def need_aei(where,folders):
-	noaei = []
-	for i in xrange(len(folders)): #iterate over folders in target
-		aei = False #Initialy assume that all sims have no aeis
-		contents = os.listdir(absw + where + '/' + folders[i]) #Content list
-		for line in contents: #Check each name for .aei
-			if '.aei' in line:
-				aei = True #Change state of AEI
-		if aei == False: noaei.append(folders[i])
-	return noaei
-
-#Copy element6 and the needed input files then unpack
-def unpack(where,noaei):
-	home = os.getcwd() #So that we can return to the needed home directory where files are later
-	for i in xrange(len(noaei)):
-		os.system('cp ./element6 ./element.in ./message.in ' + absw + where + '/' + noaei[i])
-		os.chdir(absw + where + '/' + noaei[i])
-		os.system('./element6')
-		os.chdir(home)
-	
 def call_fmft(where,filename,nfreq,mode):
 	#Where am I hiding the source code
-	sourcepath = '/home/bulin/Mercury/scripts/fmft/'
-	absw = '/home/bulin/Mercury/'
+	sourcepath = absw + 'jupiter/fmft/'
 	home_path = os.getcwd()
 	os.chdir(absw + where)
 
