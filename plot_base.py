@@ -6,7 +6,7 @@ from matplotlib.ticker import AutoMinorLocator
 import astropy.constants as const
 
 #x1 and d are list type, or nparray type
-def plot_base(x1,d,type=1,dolegend=False,names=None,yaxis_title=None,xaxis_title=None,title=None,x_limit=None,y_limit=None,set_dpi=128):
+def plot_base(x1,d,savename=None,type=1,dolegend=False,names=None,yaxis_title=None,xaxis_title=None,title=None,x_limit=None,y_limit=None,set_dpi=128):
 
 	minorLocator = AutoMinorLocator()
 
@@ -48,4 +48,9 @@ def plot_base(x1,d,type=1,dolegend=False,names=None,yaxis_title=None,xaxis_title
 	pylab.tick_params(which='major', length=7)
 	ax1.xaxis.grid(True,which='both',linewidth=.5)
 
-	pylab.show() #Show
+	if savename is not None:
+		pylab.savefig(savename)
+	else:
+		pylab.show() #Show
+		
+	fig.clf()
