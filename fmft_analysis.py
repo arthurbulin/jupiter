@@ -1,14 +1,19 @@
+#This subroutine will run an anaylsis of the fmft values returning the delta(freq) between start and stop times of the 
+#of the planets. There is also a method that calls plot_base to either save or view the plots.
+#Arthur Bulin April 6, 2016
+#Version 1.0
+
 import os
 import lib_merc as lm
 import numpy as np
+import plot_base as pb
 
-absw = '/home/bulin/Mercury/'
+absw = lm.lib_get_absw()
 
-def main(lookin):
+def main(lookin,worlds):
 	delf_dats = dict()
 	for i in xrange(len(lookin)):
 		delfs = dict()
-		worlds = ['MERCURY','MARS']
 		print 'For ' + lookin[i]
 		folders = lm.lib_get_dir(lookin[i])
 		folders.sort()
@@ -27,3 +32,15 @@ def main(lookin):
 			delfs[w] = delF
 		delf_dats[lookin[i]] = delfs
 	return delf_dats
+
+def plot_hist(dat,worlds,look,save=False):
+	#names = list()
+	for w in worlds:
+		for i in xrange(len(look)):
+			to_plot = np.absolute(dat[look[i]][w])
+	#		names.append(look[i])
+			if save == True:
+				pb.plot_base(None,[to_plot],savename=absw +'image_output/'+'hist_'+w+'_sim_'+look[i],type=2,title=r'Histogram of |$\Delta f$| for '+w+' for Sim '+look[i],xaxis_title=r'|$\Delta f$|',yaxis_title='Number of occurances')
+			else:
+				pb.plot_base(None,[to_plot],type=2,title=r'Histogram of |$\Delta f$| for '+w+' for Sim '+look[i],xaxis_title=r'|$\Delta f$|',yaxis_title='Number of occurances')
+			
