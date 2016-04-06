@@ -9,14 +9,14 @@ import math
 import copy
 version = "1.3.2"
 absw = '/home/bulin/Mercury/'
-sim = '36'
-skip = ['SATURN']
+sim = '37'
+skip = []
 
 ###################################################
 #Ecc and tpo changes for these specific cases
 #Do not use this in Jupiter as it is a special case                                                        
 ###################################################
-def main_run():
+def main():
 	os.chdir(absw + sim)
 	#These must be referenced this so a copy is created that way we don't modify relative values
 	args = copy.deepcopy(set_default_args()) #Default Args
@@ -27,7 +27,7 @@ def main_run():
 	gen = 10 #number to gen
 	 #name but I don't think I need this anymore since the script is internal now
 	flat_tpo = False #Flatten tpo
-	e_mod_gj = 8.811 #J & saturn Ecc change
+	e_mod_gj = 1.72 #J & saturn Ecc change
 	#param changes
 	start = 0
 	stop = 1.46E+12
@@ -671,4 +671,4 @@ def pl_gen(arg_changes,dir,planetnum=7):
     f.close()
 
 
-main_run()
+main()
