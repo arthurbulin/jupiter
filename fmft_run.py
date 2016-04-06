@@ -71,7 +71,10 @@ def call_fmft(where,filename,nfreq,mode):
 	dt = t[1] - t[0]
 
 	#Length of data in power of two apperntly?
-	power = int(math.floor(math.log(len(t),2)))
+	if mode == 1:
+		power = int(math.floor(math.log(len(t),2)))
+	if mode == 2:
+		power = int(math.floor(math.log(len(t)/2,2)))		
 	ndata = int(2**power)
 
 	#Read in the FMFT source code template
