@@ -21,7 +21,7 @@ def main(where):
 	for item in list:
 		if os.path.isdir(absw+where+'/'+item) == False: break
 		data = lmi.scribe('null','info.out',absw+where+"/"+item+"/","ol")
-		things = create_info(data, "./"+item, item)
+		things = create_info(data, absw+where+'/'+item, item)
 		information.append(things)
 
 #Sort out first ejection times etc
@@ -73,14 +73,14 @@ def main(where):
 	fin = zip(sets, final)
 	fin.append(counter)
 
-	lmi.scribe(fin,"/first_losses_" + number+ ".out",".","wl")
+	lmi.scribe(fin,"/first_losses_" + where+ ".out",".","wl")
 	
 	
 	fig = pl.figure()
 	ax = fig.add_subplot(111)
 	n = len(selected)
 	ax.hist(selected,n)
-	title = "First instability times for sim " + number
+	title = "First instability times for sim " + where
 	pl.title(title)
 	pl.xlabel("Planets")
 	pl.ylabel("Count")
@@ -137,4 +137,4 @@ def create_info(info, dir, sim_name):
 	return [sim_name, system_events]
 
 
-main()
+#main()
