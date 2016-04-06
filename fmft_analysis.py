@@ -20,7 +20,7 @@ def main(lookin):
 				for h in dir_con:
 					if w+'1.fmft' in h: first = h
 					if w+'2.fmft' in h: sec = h
-				print first,sec
+#				print first,sec
 				Fi,Ai,Pi = np.genfromtxt(absw + lookin[i] +'/'+ folders[j] +'/'+ first,unpack=True)
 				Ff,Af,Pf = np.genfromtxt(absw + lookin[i] +'/'+ folders[j] +'/'+ sec,unpack=True)
 				delF.append(Ff[0] - Fi[0])
