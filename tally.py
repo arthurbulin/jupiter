@@ -1,24 +1,26 @@
 #!/usr/bin/python
-import lib_misc as lm
+import lib_misc as lmi
+import lib_merc as lme
 import os
 import pylab as pl
-import numpy as np
-import sys
-import warnings as war
+#import numpy as np
+#import sys
+#import warnings as war
 
-war.filterwarnings("ignore")
+#war.filterwarnings("ignore")
+absw = lme.lib_get_absw()
 
-def main():
-	number = str(sys.argv[1])
+def main(where):
+#	number = str(sys.argv[1])
 #	number = "19"
-	list = os.listdir("./")
+	list = os.listdir(absw + where)
 	counter,information,selected,planets = {},[],[],[]
 	i = 0
 	
 	list = sorted(list)
 	for item in list:
-		if os.path.isdir("./"+item) == False: break
-		data = lm.scribe('null','info.out',"./"+item+"/","ol")
+		if os.path.isdir(absw+where+'/'+item) == False: break
+		data = lmi.scribe('null','info.out',absw+where+"/"+item+"/","ol")
 		things = create_info(data, "./"+item, item)
 		information.append(things)
 
@@ -71,7 +73,7 @@ def main():
 	fin = zip(sets, final)
 	fin.append(counter)
 
-	lm.scribe(fin,"/first_losses_" + number+ ".out",".","wl")
+	lmi.scribe(fin,"/first_losses_" + number+ ".out",".","wl")
 	
 	
 	fig = pl.figure()
@@ -90,7 +92,7 @@ def create_info(info, dir, sim_name):
 	done_success = False
 
 	system_events,event_data,big_index,big_names = [],[],[],[]
-	big_data = lm.scribe('null','/big.in',dir,'ol')
+	big_data = lmi.scribe('null','/big.in',dir,'ol')
 	
 	#Extract style, epoch, and name line
 	for i in xrange(len(big_data)):
