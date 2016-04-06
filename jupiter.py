@@ -1,6 +1,6 @@
 #This program will scan a directory and load in Mercury data. It will also generate and submit to condor.
 #Also it will write and store information as binary files.
-
+#Test
 import os
 import jawalib as jl #This will import the JawaLib. It is a series of defintions that I use for a number of programs.
 import create_info as ci
