@@ -7,7 +7,7 @@ import lib_merc as lme
 ind_names = lme.lib_ind_names()
 absw = lme.lib_get_absw()
 
-def main(lookin,peaks=[2.5,5,10]):
+def main(lookin,peaks=None):
 	data = dict()
 	peaks_to_check = peaks
 	for i in xrange(len(lookin)):
@@ -23,10 +23,12 @@ def main(lookin,peaks=[2.5,5,10]):
 			t,am = amd.AMDmonitor(absw + lookin[i] + '/' + folders[j])
 			print 'Getting Max AMD',
 			max = amd_max(t,am)
-			print 'Getting peaks'
-			peaks = amd_first_times(t,am,peaks_to_check)
-
-			sets[folders[j]] = {'max':max, 'peaks':peaks}
+			if peaks_to_check is not None:
+				print 'Getting peaks'
+				peaks = amd_first_times(t,am,peaks_to_check)
+				sets[folders[j]] = {'max':max, 'peaks':peaks}
+			else:
+				sets[folders[j]] = {'max':max}
 		data[lookin[i]] = sets
 	return data
 
