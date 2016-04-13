@@ -55,7 +55,7 @@ def lib_need_aei(where,folders):
 def lib_unpack(where,noaei):
 	home = os.getcwd() #So that we can return to the needed home directory where files are later
 	for i in xrange(len(noaei)):
-		os.system('cp ./element6 ./element.in ./message.in ' + absw + where + '/' + noaei[i])
+		os.system('cp ' +absw+'jupiter/mercury/element6 '+absw+'jupiter/mercury/element.in '+absw+'jupiter/mercury/message.in ' + absw + where + '/' + noaei[i])
 		os.chdir(absw + where + '/' + noaei[i])
 		os.system('./element6')
 		os.chdir(home)
