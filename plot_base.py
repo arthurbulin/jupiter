@@ -6,7 +6,7 @@ from matplotlib.ticker import AutoMinorLocator
 import astropy.constants as const
 
 #x1 and d are list type, or nparray type
-def plot_base(x1,d,savename=None,type=1,dolegend=False,names=None,yaxis_title=None,xaxis_title=None,title=None,x_limit=None,y_limit=None,set_dpi=128):
+def plot_base(x1,d,savename=None,ptype=1,width=1,dolegend=False,names=None,yaxis_title=None,xaxis_title=None,title=None,x_limit=None,y_limit=None,set_dpi=128):
 
 	minorLocator = AutoMinorLocator()
 
@@ -19,17 +19,24 @@ def plot_base(x1,d,savename=None,type=1,dolegend=False,names=None,yaxis_title=No
 
 	#Iterate through for each array in the list d and add it to the plot
 #		ax1.plot(x1,d[i],linestyle=linestyles[i],label=labels[i],lw=2)
-
-	if type == 1:
-		if names is not None:
-			for i in xrange(len(d)):
-				ax1.plot(x1,d[i],label=names[i],lw=2)
-		else:
-			for i in xrange(len(d)):
-				ax1.plot(x1,d[i],lw=2)
-	if type == 2:
+	if type(x1) is list:
 		for i in xrange(len(d)):
-			ax1.hist(d[i])
+			if names is not None:
+				ax1.plot(x1[i],d[i],label=names[i],lw=width)
+			else:
+				ax1.plot(x1[i],d[i],lw=width)
+
+	if type(x1) is not list:
+		if ptype == 1:
+			if names is not None:
+				for i in xrange(len(d)):
+					ax1.plot(x1,d[i],label=names[i],lw=width)
+			else:
+				for i in xrange(len(d)):
+					ax1.plot(x1,d[i],lw=width)
+		if ptype == 2:
+			for i in xrange(len(d)):
+				ax1.hist(d[i])
 
 	#Assign Axis labels, title, and ticks
 	if yaxis_title is not None: ax1.set_ylabel(yaxis_title,fontsize=18)
