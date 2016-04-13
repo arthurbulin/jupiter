@@ -7,7 +7,7 @@ import os
 
 def aeireader(filename):
     """this function reads a mercury .aei file"""
-    t, el1, el2, el3, el4, el5, el6, m, no = np.genfromtxt(filename, unpack = True, skip_header = 4)
+    t, el1, el2, el3, el4, el5, el6, m = np.genfromtxt(filename, unpack = True, skip_header = 4)
 
     return(t, el1, el2, el3, el4, el5, el6, m)
 
