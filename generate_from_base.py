@@ -9,7 +9,7 @@ import math
 import copy
 version = "1.3.2"
 absw = '/home/bulin/Mercury/'
-sim = '37'
+sim = '39'
 skip = []
 
 ###################################################
@@ -26,8 +26,8 @@ def main():
 	#Easy Changes per sim
 	gen = 10 #number to gen
 	 #name but I don't think I need this anymore since the script is internal now
-	flat_tpo = False #Flatten tpo
-	e_mod_gj = 1.72 #J & saturn Ecc change
+	flat_tpo = True #Flatten tpo
+	e_mod_gj = 1.6 #J & saturn Ecc change
 	#param changes
 	start = 0
 	stop = 1.46E+12
@@ -50,7 +50,10 @@ def main():
 		for tps in list:
 			args[tps]['ecc'] = .001
 			args[tps]['inc'] = .1
-
+#		args['earth']['inc'] = 0.0
+#			print str(args[tps]['ecc']) +' '+ tps
+#			print str(args[tps]['inc']) +' '+ tps
+			
 	params['start'] = start
 	params['stop'] = stop
 	params['interval'] = output_interval
