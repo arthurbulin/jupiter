@@ -1,4 +1,3 @@
-#!/usr/bin/python
 #################################################
 #	Mercury Simulation setup script		#
 #	Arthur Bulin arthur.a.bulin@ou.edu	#
@@ -7,33 +6,35 @@ import os
 import numpy as np
 import math
 import copy
-version = "1.3.2"
-absw = '/home/bulin/Mercury/'
-sim = '39'
-skip = []
+import lib_merc as lme
+#version = "1.3.2"
+absw = lme.lib_get_absw
+#sim = '39'
+#skip = []
 
 ###################################################
 #Ecc and tpo changes for these specific cases
 #Do not use this in Jupiter as it is a special case                                                        
 ###################################################
-def main():
+def main(sim,skip=[],gen=10,flat_tpo=False,e_mod_gj=1,user_force='yes'):
 	os.chdir(absw + sim)
-	#These must be referenced this so a copy is created that way we don't modify relative values
+
+	#These must be referenced, so a copy is created that way we don't modify relative values
 	args = copy.deepcopy(set_default_args()) #Default Args
 	params = copy.deepcopy(param_defaults())
 	list = ['mercury','venus','earth','mars'] #Tps
-#	print args
-	#Easy Changes per sim
-	gen = 10 #number to gen
-	 #name but I don't think I need this anymore since the script is internal now
-	flat_tpo = True #Flatten tpo
-	e_mod_gj = 1.6 #J & saturn Ecc change
+
+	#Easy Changes per sim; Removed to make callable
+#	gen = 10 #number to gen
+#	flat_tpo = True #Flatten tpo
+#	e_mod_gj = 1.6 #J & saturn Ecc change
+
 	#param changes
 	start = 0
 	stop = 1.46E+12
 	output_interval = 3.6525E+7
 	timestep = 2
-	user_force = 'yes'
+#	user_force = 'yes'
 	
 	
 	#I recomend any changes to the values not done above or below are done here
