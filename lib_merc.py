@@ -6,8 +6,12 @@ import os
 #This definition is very very important for every other program
 #This sets the ABSolute Working directory for jupiter from the file absw.path
 def lib_get_absw(mode=0):
+	"""Returns our Absolute working path defined in params.cfg"""
 	if mode == 0:
-		with open('absw.path','r') as f: absw = f.read()
+		contents = lib_read_params()
+		for i in xrange(len(contents)):
+			if 'absw:' in contents[i]:
+				absw = contents[i].split(':')[1]			
 	if mode == 1:
 		absw = raw_input('Mercury working directory absolute path: ')
 	return absw.strip()
@@ -15,14 +19,43 @@ def lib_get_absw(mode=0):
 #Used to create the reference names for folders so that anything that doesnt meet the 0...9 etc scheme isn't 
 #scanned. This is currently only good for 10 sims (0-9)
 def lib_ind_names(num=10):
+	"""Returns a list of 0-9 strings, used for set folder naviagation, can be altered for other values, but default is 10"""
 	ind_names = range(num)
 	for i in ind_names:
 		ind_names[i] = str(i)
 	return ind_names
 
+#Gets our data out directory. This will determine where all data and subfolders are stored
+def lib_get_dat_out(mode=0):
+	"""Returns the string path for data output"""
+	if mode == 0:
+		contents = lib_read_params()
+		for i in xrange(len(contents)):
+			if 'data_out:' in contents[i]:
+				data_out = contents[i].split(':')[1]
+	return data_out
+
+def lib_get_path(path,mode=0):
+	if mode == 0:
+		contents = lib_read_params()
+		for i in xrange(len(contents)):
+			if path in contents[i]:
+				gets = contents[i].split(':')[1].split()[0]
+	return gets
+		
+def lib_read_params():
+	"""This will read in our params.cfg file and return them as a list"""
+	with open('params.cfg','r') as f:
+		contents = f.readlines()
+	return contents
+			
+
+
+
 #These calls set these global variables when the library is imported
 ind_names = lib_ind_names()
-absw = lib_get_absw()
+#absw = lib_get_absw()
+absw = lib_get_path('absw')
 
 #################################################
 #	Navigate, check for aei, unpack		#

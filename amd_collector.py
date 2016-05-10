@@ -5,7 +5,8 @@ import lib_merc as lme
 
 #Set my absolute directory and end names. These are needed for certain things.
 ind_names = lme.lib_ind_names()
-absw = lme.lib_get_absw()
+#absw = lme.lib_get_absw()
+absw = lme.lib_get_path('absw')
 
 def main(lookin,peaks=None):
 	data = dict()

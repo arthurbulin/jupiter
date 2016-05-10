@@ -9,7 +9,8 @@ import lib_merc as lme
 
 #Assign global variables witihin the script
 ind_names = lme.lib_ind_names()
-absw = lme.lib_get_absw()
+#absw = lme.lib_get_absw()
+absw = lme.lib_get_path('absw')
 
 def main(lookin):
 	data = dict()

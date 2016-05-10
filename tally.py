@@ -8,7 +8,8 @@ import pylab as pl
 #import warnings as war
 
 #war.filterwarnings("ignore")
-absw = lme.lib_get_absw()
+#absw = lme.lib_get_absw()
+absw = lme.lib_get_path('absw')
 
 def main(where):
 #	number = str(sys.argv[1])
@@ -72,19 +73,19 @@ def main(where):
 		final.append(tally)
 	fin = zip(sets, final)
 	fin.append(counter)
-
-	lmi.scribe(fin,"/first_losses_" + where+ ".out",".","wl")
+	return fin
+#	lmi.scribe(fin,"/first_losses_" + where+ ".out",".","wl")
 	
 	
-	fig = pl.figure()
-	ax = fig.add_subplot(111)
-	n = len(selected)
-	ax.hist(selected,n)
-	title = "First instability times for sim " + where
-	pl.title(title)
-	pl.xlabel("Planets")
-	pl.ylabel("Count")
-	pl.savefig(title)
+#	fig = pl.figure()
+#	ax = fig.add_subplot(111)
+#	n = len(selected)
+#	ax.hist(selected,n)
+#	title = "First instability times for sim " + where
+#	pl.title(title)
+#	pl.xlabel("Planets")
+#	pl.ylabel("Count")
+#	pl.savefig(title)
 	
 #Meat of data retrieval
 def create_info(info, dir, sim_name):
