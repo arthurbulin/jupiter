@@ -12,6 +12,7 @@ ind_names = lme.lib_ind_names()
 #dat_out = lme.lib_get_out()
 absw = lme.lib_get_path('absw')
 data_out = lme.lib_get_path('data_out')
+filename = 'data.hdf5'
 
 ##############################################################
 ##	Data collection and commitment in this section	     #
@@ -88,8 +89,9 @@ def refine_raw(dat):
 
 def assemble_sets(header,bodies,inds,dat,sim,set):
 	"""Sorts and commits the data to the HDF5 file"""
-	data_file = h5.File('./data.hdf5','a')
+	data_file = h5.File(data_out+'data.hdf5','a')
 	conflicts = list()
+	same = None
 	#Iterate over data
 	for i in xrange(len(bodies)):
 		index = inds[bodies[i]]
@@ -102,11 +104,17 @@ def assemble_sets(header,bodies,inds,dat,sim,set):
 			commit_dat = body_data_flip[j]
 			path = sim+'/'+set+'/'+bodies[i]+'/'+header[j]
 			
+			#Had the create exception here because sometimes bad things happen wierdly
+			try:
+				diff = (commit_dat-np.asarray(data_file[path])).any()
+			except:
+				diff = True
+				
 			#Conflict resolution
 			if path not in data_file: #If it doesnt exist, commit it to file
 				data_file.create_dataset(path, data=commit_dat)
 			
-			elif (commit_dat-np.asarray(data_file[path])).any(): #If it is in file but does not match append
+			elif diff: #If it is in file but does not match append
 				conflicts.append(path)
 			
 			else: same = True #If datagroup exists and matches
@@ -114,7 +122,7 @@ def assemble_sets(header,bodies,inds,dat,sim,set):
 	data_file.close()
 	
 	if len(conflicts) > 0: return conflicts #Return path list of conflicts
-	elif same: return True #If there are conflicts but data is the same in the file return True
+	elif same != None: return True #If there are conflicts but data is the same in the file return True
 	else: return False #No conflicts, all writes sucessfull
 	
 def check_dir(where,sim):
@@ -158,16 +166,41 @@ def main(lookin):
 			if type(conflicts) != bool: total_conflicts.append(conflicts) #if type != bool then append
 			else: conflicts_bool.append(conflicts) #if  type == bool then get bool state and append
 		
-		#Conflict resolution
-		if len(total_conflicts) > 0: #if there is a length to total_conflicts 
-			print ' WARNING: Conflicts exist', #print alert of conflicts
-			state = False #set state to false
-			if True in conflicts_bool: #Find out it there were also matching data conflicts
-				print ' SOME existing data matched!' #Alert if so
-				state = True #Change state
-			return state,total_conflicts #Return state of conflicts and list if necessary
+	#Conflict resolution
+	if len(total_conflicts) > 0: #if there is a length to total_conflicts 
+		print ' WARNING: Conflicts exist', #print alert of conflicts
+		state = False #set state to false
+		if True in conflicts_bool: #Find out it there were also matching data conflicts
+			print ' SOME existing data matched!' #Alert if so
+			state = True #Change state
+		return state,total_conflicts #Return state of conflicts and list if necessary
 			
-		elif True in conflicts_bool:
-			return True,[] #If there were same conflicts but no diffs
-			
-		else: return False,[] #No conflicts at all
+	elif True in conflicts_bool:
+		return True,[] #If there were same conflicts but no diffs
+		
+	else: return False,[] #No conflicts at all
+
+def retreive(sim,set,world,value):
+	"""Returns a dataset from our hdf5 file"""
+	f =  h5.File(data_out+filename,'r')
+	try:
+		retreived = f[sim+'/'+set+'/'+world+'/'+value]
+		retreived = np.array(retreived)
+		f.close()
+		return retreived
+	except:
+		print 'WARN: A value for ' + str(sim +'/'+set+'/'+world+'/'+value) + ' does not exist!!!'
+		f.close()
+		return None
+		
+def get_keys(sim,set=None,world=None):
+	"""returns the keys in a specific group or subgroup"""
+	f = h5.File(data_out+filename,'r')
+	if set == None and world == None:
+		return [str(i) for i in f[sim].keys()]
+	elif world == None:
+		return [str(i) for i in f[sim+'/'+set].keys()]
+	else:
+		return [str(i) for i in f[sim+'/'+set+'/'+world].keys()]
+
+

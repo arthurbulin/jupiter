@@ -5,16 +5,16 @@ import os
 
 #This definition is very very important for every other program
 #This sets the ABSolute Working directory for jupiter from the file absw.path
-def lib_get_absw(mode=0):
-	"""Returns our Absolute working path defined in params.cfg"""
-	if mode == 0:
-		contents = lib_read_params()
-		for i in xrange(len(contents)):
-			if 'absw:' in contents[i]:
-				absw = contents[i].split(':')[1]			
-	if mode == 1:
-		absw = raw_input('Mercury working directory absolute path: ')
-	return absw.strip()
+#def lib_get_absw(mode=0):
+#	"""Returns our Absolute working path defined in params.cfg"""
+#	if mode == 0:
+#		contents = lib_read_params()
+#		for i in xrange(len(contents)):
+#			if 'absw:' in contents[i]:
+#				absw = contents[i].split(':')[1]			
+#	if mode == 1:
+#		absw = raw_input('Mercury working directory absolute path: ')
+#	return absw.strip()
 
 #Used to create the reference names for folders so that anything that doesnt meet the 0...9 etc scheme isn't 
 #scanned. This is currently only good for 10 sims (0-9)
@@ -26,14 +26,14 @@ def lib_ind_names(num=10):
 	return ind_names
 
 #Gets our data out directory. This will determine where all data and subfolders are stored
-def lib_get_dat_out(mode=0):
-	"""Returns the string path for data output"""
-	if mode == 0:
-		contents = lib_read_params()
-		for i in xrange(len(contents)):
-			if 'data_out:' in contents[i]:
-				data_out = contents[i].split(':')[1]
-	return data_out
+#def lib_get_dat_out(mode=0):
+#	"""Returns the string path for data output"""
+#	if mode == 0:
+#		contents = lib_read_params()
+#		for i in xrange(len(contents)):
+#			if 'data_out:' in contents[i]:
+#				data_out = contents[i].split(':')[1]
+#	return data_out
 
 def lib_get_path(path,mode=0):
 	if mode == 0:

@@ -4,6 +4,9 @@ import pylab
 import numpy as np
 from matplotlib.ticker import AutoMinorLocator
 import astropy.constants as const
+import warnings as war
+
+war.filterwarnings("ignore")
 
 #x1 and d are list type, or nparray type
 def plot_base(x1,d,savename=None,ptype=1,width=1,dolegend=False,names=None,yaxis_title=None,xaxis_title=None,title=None,x_limit=None,y_limit=None,set_dpi=128):
@@ -58,6 +61,10 @@ def plot_base(x1,d,savename=None,ptype=1,width=1,dolegend=False,names=None,yaxis
 	if savename is not None:
 		pylab.savefig(savename)
 	else:
-		pylab.show() #Show
+		try:
+			pylab.show() #Show
+		except: pass
 		
-	fig.clf()
+	try:
+		fig.clf()
+	except: pass
