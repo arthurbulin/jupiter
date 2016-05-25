@@ -18,6 +18,8 @@ def main(where):
 	counter,information,selected,planets = {},[],[],[]
 	i = 0
 	
+#	folders = len(list)
+	
 	list = sorted(list)
 	for item in list:
 		if os.path.isdir(absw+where+'/'+item) == False: break
@@ -57,6 +59,7 @@ def main(where):
 
 #Survival fraction calculations
 #	print counter	
+
 	for each in counter:
 		counter[each] = format(counter[each] / 10.,'.2f')
 
@@ -73,18 +76,19 @@ def main(where):
 		final.append(tally)
 	fin = zip(sets, final)
 	fin.append(counter)
-	return fin
+#	return fin
 #	lmi.scribe(fin,"/first_losses_" + where+ ".out",".","wl")
 	
-	
-#	fig = pl.figure()
-#	ax = fig.add_subplot(111)
-#	n = len(selected)
-#	ax.hist(selected,n)
+#	
+	fig = pl.figure()
+	ax = fig.add_subplot(111)
+	n = len(selected)
+	ax.hist(selected,n)
 #	title = "First instability times for sim " + where
 #	pl.title(title)
-#	pl.xlabel("Planets")
-#	pl.ylabel("Count")
+	pl.xlabel("Instability Times")
+	pl.ylabel("Count")
+	pl.show()
 #	pl.savefig(title)
 	
 #Meat of data retrieval
