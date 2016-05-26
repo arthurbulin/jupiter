@@ -41,9 +41,9 @@ def main():
 				break
 			elif input_v == 2: #AMD analysis
 				input_v = amd_analysis()
-			elif input_v == 3:
-#				input_v = amd_graphing()
-#				break
+				break
+			elif input_v == 3: #FMFT analysis
+				input_v = fmft_analysis()
 				print 'option 3'
 			elif input_v == 4:
 				print 'option 4'
@@ -55,7 +55,16 @@ def main():
 			if input_v == 0: break
 				
 		if input_v == 0: break
+		
+def fmft_analysis():
+	while True:
+		print
+		
 
+##############################################################################################
+#				AMD ANALYSIS ROUTINES					     #
+##############################################################################################
+#These routines control AMD analysis
 
 def amd_analysis():
 	"""AMD data analysis"""
@@ -65,6 +74,7 @@ def amd_analysis():
 		print '1: Return Peaks'
 		print '2: AMD Max'
 		print '3: Plot'
+		print '4: Exit to main'
 		print '0: Exit'
 		
 		while True:
@@ -118,6 +128,8 @@ def amd_analysis():
 				input_v = amd_graphing()
 				break
 				
+			elif input_v == 4:
+				return None
 			else:
 				print 'That is not a valid option'
 			#For while break and quit states
