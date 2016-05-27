@@ -488,9 +488,11 @@ def rcalc(E,a,ecc):
 
 
 
-def pl_gen(arg_changes,dir,planetnum=7,skip=[]):
+def pl_gen(arg_changes,dir,planetnum=7,skip=[],planets):
     """generates a tp initial conditions file for SCATR"""
 
+    names,denlist,mass,a,ecc,inc,longper,longasc,meanlong = planet_create()
+    planetnum = len(names) + 1
     names = ['JUPITER','SATURN','MERCURY','VENUS','EARTH','MARS']
     denlist = [1.,1.,3.,3.,3.,3.]
     mass=np.empty(planetnum)
@@ -689,3 +691,6 @@ def pl_gen(arg_changes,dir,planetnum=7,skip=[]):
         f.write('0. 0. 0.\n')
 
     f.close()
+
+def create_planets():
+	
