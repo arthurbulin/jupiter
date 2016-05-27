@@ -35,6 +35,8 @@ def lib_ind_names(num=10):
 #				data_out = contents[i].split(':')[1]
 #	return data_out
 
+#Returns gets from the params.cfg, mostly just paths in this one but works for settings as well
+#ABSW, hdf5
 def lib_get_path(path,mode=0):
 	if mode == 0:
 		contents = lib_read_params()
