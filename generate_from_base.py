@@ -8,59 +8,75 @@ import math
 import copy
 import lib_merc as lme
 #version = "1.3.2"
-absw = lme.lib_get_absw
+#absw = lme.lib_get_absw
 #sim = '39'
 #skip = []
+
+absw = lme.lib_get_path('absw')
+ind_names = lme.lib_ind_names()
 
 ###################################################
 #Ecc and tpo changes for these specific cases
 #Do not use this in Jupiter as it is a special case                                                        
 ###################################################
-def main(sim,skip=[],gen=10,flat_tpo=False,e_mod_gj=1,user_force='yes'):
-	os.chdir(absw + sim)
+def main(sim,args=None,params=None,skip=[],gen=10,flat_tpo=False):
+	try: os.chdir(absw + sim)
+	except OSError as er:
+		ER = str(er)
+		if ('errno' in str.lower(ER)) and ('2' in ER):
+			print ER
+			print 'Creating Directory at '+absw+sim
+			try: os.mkdir(absw+sim)
+			except:
+				return 'Error making sim directory',str(absw+sim)
+			os.chdir(absw+sim)
 
-	#These must be referenced, so a copy is created that way we don't modify relative values
-	args = copy.deepcopy(set_default_args()) #Default Args
-	params = copy.deepcopy(param_defaults())
-	list = ['mercury','venus','earth','mars'] #Tps
+	#If these must be referenced, a copy is created that way we don't modify relative values
+	#now that I see it I don't think this is necessray. But I will leave it for now.
+	#These are now only called when args and params are fully default
+	if args is None:
+		args = copy.deepcopy(set_default_args()) #Default Args
+	if params is None:
+		params = copy.deepcopy(param_defaults())
+	
+	tp_list = ['mercury','venus','earth','mars'] #Tps
 
+#Removed when converted to allow input of params and changes from method call
 	#Easy Changes per sim; Removed to make callable
 #	gen = 10 #number to gen
 #	flat_tpo = True #Flatten tpo
 #	e_mod_gj = 1.6 #J & saturn Ecc change
 
 	#param changes
-	start = 0
-	stop = 1.46E+12
-	output_interval = 3.6525E+7
-	timestep = 2
+#	start = 0
+#	stop = 1.46E+12
+#	output_interval = 3.6525E+7
+#	timestep = 2
 #	user_force = 'yes'
 	
-	
-	#I recomend any changes to the values not done above or below are done here
-	#So they don't get lost
 	
 	###################################
 	#adjustments that use easy changes#	
 	###################################
-	args['jupiter']['ecc'] = e_mod_gj
-	args['saturn']['ecc'] = e_mod_gj
+#	args['jupiter']['ecc'] = e_mod_gj
+#	args['saturn']['ecc'] = e_mod_gj
 
 	#Flatten TPOs if True
 	if flat_tpo == True:
-		for tps in list:
+		for tps in tp_list:
 			args[tps]['ecc'] = .001
 			args[tps]['inc'] = .1
 #		args['earth']['inc'] = 0.0
 #			print str(args[tps]['ecc']) +' '+ tps
 #			print str(args[tps]['inc']) +' '+ tps
 			
-	params['start'] = start
-	params['stop'] = stop
-	params['interval'] = output_interval
-	params['timestep'] = timestep
-	params['user force'] = user_force	
+#	params['start'] = start
+#	params['stop'] = stop
+#	params['interval'] = output_interval
+#	params['timestep'] = timestep
+#	params['user force'] = user_force	
 #	print args		
+
 	print 'Starting Generation'
 	#Perform copy of base params and generate big.in files for each.             
 #	if os.path.isdir('./0') == True:
@@ -78,13 +94,16 @@ def main(sim,skip=[],gen=10,flat_tpo=False,e_mod_gj=1,user_force='yes'):
 	print "Made big.in\n"
 	
 	for i in xrange(gen - 1):
-		os.system('mkdir ./'+str(i+1))
+		os.mkdir('./'+str(i+1))
 		print 'Made ' + str(i+1)
 		os.system('cp ./0/* ./'+str(i+1))
 		print 'Copied base files to ' + str(i+1)
 		pl_gen(args,'./'+str(i+1))
 		print 'big.in genereation complete\n'
 
+	return None,None
+	
+	
 ##############################################
 #	These set my default arguments	     #
 ##############################################
@@ -390,16 +409,10 @@ def write_message(where):
 
 #Originaly from Nate Kaib. Modified for use with Jupiter by Arthur Bulin
 #Feburary 12 2016
-#Originaly from Nate Kaib. Modified for use with Jupiter by Arthur Bulin
-#Feburary 12 2016
-#import numpy as np
-#import math
 
 def anomcalc(meananom,ecc):
     """calculates eccentric anomaly from the mean anomaly"""
     #based on Murray and Dermot
-#    print 'ecc'
- #   print ecc
     meananom=np.asarray(meananom)
     ecc=np.asarray(ecc)
     k=0.85
@@ -475,7 +488,7 @@ def rcalc(E,a,ecc):
 
 
 
-def pl_gen(arg_changes,dir,planetnum=7):
+def pl_gen(arg_changes,dir,planetnum=7,skip=[]):
     """generates a tp initial conditions file for SCATR"""
 
     names = ['JUPITER','SATURN','MERCURY','VENUS','EARTH','MARS']
@@ -572,7 +585,10 @@ def pl_gen(arg_changes,dir,planetnum=7):
     gencoordz[1:planetnum] = rpos * transformz
 
     #calculating velocities in specific orbit coordinate
-    signinc = inc / np.fabs(inc)
+# I am unsure of this next line. This is Nate's code so I am not sure if i am not understanding it.
+# I have commented it out because it causes a singularity. But signinc is never called anyway.
+# This is the only occurance.
+#    signinc = inc / np.fabs(inc)
     period = np.sqrt(4 * math.pi**2 * a**3 / mass[0])
     angvel = 2 * math.pi / period
 
@@ -673,6 +689,3 @@ def pl_gen(arg_changes,dir,planetnum=7):
         f.write('0. 0. 0.\n')
 
     f.close()
-
-
-main()
