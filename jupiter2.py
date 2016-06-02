@@ -31,7 +31,7 @@ def main():
 		while True:
 			input_v = input('>') #Get input
 			if input_v == 0:
-				break
+				return 'Goodbye'
 			elif input_v == 1: #For hdf5 scan
 				print '	To commence HDF5 scan and commit please enter the name(sim number) you would like to commit'
 				print '	Enter the values seperated by a comma 1,2,3,etc.'
@@ -48,17 +48,54 @@ def main():
 			elif input_v == 4:
 				print 'option 4'
 			elif input_v == 5:
-				print 'option 5'
+				input_v = sim_gen_main()
+				break
 			else: #Invalid entry handling
 				print 'That is not a valid option'
 	
 			if input_v == 0: break
 				
 		if input_v == 0: break
-		
-def fmft_analysis():
+
+##############################################################################################
+#			Simulation generation routines					     #
+##############################################################################################
+def sim_gen_main():
 	while True:
-		print
+		print "Simulation Generation Menu"
+		print "1: Set custom values and generate"
+		print "2: Generate Default value simulation"
+		print "3: Generate Condor job"
+		print "4: Generate description and values file"
+		print "5: Exit to JUPITER menu"
+		print "0: Exit JUPITER"
+		
+		while True:
+			input_v = input('>')
+			
+			if input_v == 0: #program exit
+				return input_v
+			elif input_v == 1: #Generate a sim with custom values
+				input_v = sim_gen_custom()
+				break
+			elif input_v == 2:
+				sim_name = raw_input("Simulation Name: ")
+				gfb.main()		
+			elif input_v == 3:
+			
+			elif input_v == 4:
+			
+			elif inpur_v == 5:
+				return None
+			else:
+				print "That is not a valid option"
+				
+def sim_gen_custom():
+	
+			
+#def fmft_analysis():
+#	while True:
+#		print
 		
 
 ##############################################################################################
