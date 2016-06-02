@@ -7,19 +7,22 @@ import numpy as np
 import math
 import copy
 import lib_merc as lme
+import json
 #version = "1.3.2"
 #absw = lme.lib_get_absw
 #sim = '39'
 #skip = []
 
+data_out = lme.lib_get_path('data_out')
 absw = lme.lib_get_path('absw')
 ind_names = lme.lib_ind_names()
+name_values = ['name','mass','a','ecc','inc','longper','longasc','meanlong','den']
 
 ###################################################
 #Ecc and tpo changes for these specific cases
 #Do not use this in Jupiter as it is a special case                                                        
 ###################################################
-def main(sim,args=None,params=None,skip=[],gen=10,flat_tpo=False):
+def main(sim,new_worlds=None,args=None,params=None,skip=[],gen=10,flat_tpo=False):
 	try: os.chdir(absw + sim)
 	except OSError as er:
 		ER = str(er)
@@ -41,65 +44,35 @@ def main(sim,args=None,params=None,skip=[],gen=10,flat_tpo=False):
 	
 	tp_list = ['mercury','venus','earth','mars'] #Tps
 
-#Removed when converted to allow input of params and changes from method call
-	#Easy Changes per sim; Removed to make callable
-#	gen = 10 #number to gen
-#	flat_tpo = True #Flatten tpo
-#	e_mod_gj = 1.6 #J & saturn Ecc change
-
-	#param changes
-#	start = 0
-#	stop = 1.46E+12
-#	output_interval = 3.6525E+7
-#	timestep = 2
-#	user_force = 'yes'
-	
-	
-	###################################
-	#adjustments that use easy changes#	
-	###################################
-#	args['jupiter']['ecc'] = e_mod_gj
-#	args['saturn']['ecc'] = e_mod_gj
-
 	#Flatten TPOs if True
 	if flat_tpo == True:
 		for tps in tp_list:
 			args[tps]['ecc'] = .001
 			args[tps]['inc'] = .1
-#		args['earth']['inc'] = 0.0
-#			print str(args[tps]['ecc']) +' '+ tps
-#			print str(args[tps]['inc']) +' '+ tps
-			
-#	params['start'] = start
-#	params['stop'] = stop
-#	params['interval'] = output_interval
-#	params['timestep'] = timestep
-#	params['user force'] = user_force	
-#	print args		
 
 	print 'Starting Generation'
-	#Perform copy of base params and generate big.in files for each.             
+#	Perform copy of base params and generate big.in files for each.             
 #	if os.path.isdir('./0') == True:
 	os.system('mkdir ./0')
-	print "Made Base Directory"
+#	print "Made Base Directory"
 	gen_param(params,'./0')
-	print "Made param file"
+#	print "Made param file"
 	write_small('./0')
-	print "Made small.in"
+#	print "Made small.in"
 	write_message('./0')
-	print "Made message.in"
+#	print "Made message.in"
 	write_files('./0')
-	print "Made files.in"
+#	print "Made files.in"
 	pl_gen(args,'./0')
-	print "Made big.in\n"
+#	print "Made big.in\n"
 	
 	for i in xrange(gen - 1):
 		os.mkdir('./'+str(i+1))
-		print 'Made ' + str(i+1)
+#		print 'Made ' + str(i+1)
 		os.system('cp ./0/* ./'+str(i+1))
-		print 'Copied base files to ' + str(i+1)
-		pl_gen(args,'./'+str(i+1))
-		print 'big.in genereation complete\n'
+#		print 'Copied base files to ' + str(i+1)
+		pl_gen(args,'./'+str(i+1),new_worlds=new_worlds)
+#		print 'big.in genereation complete\n'
 
 	return None,None
 	
@@ -112,7 +85,7 @@ def main(sim,args=None,params=None,skip=[],gen=10,flat_tpo=False):
 def set_default_args():
 	default_vals = dict()
 #	arg_changes = dict()
-	default_values = {'mass':1.,'a':1., 'ecc':1., 'inc':1., 'longper':1., 'longasc':1., 'meanlong':1.}
+	default_values = {'mass':1.,'a':1., 'ecc':1., 'inc':1., 'longper':1., 'longasc':1., 'meanlong':1., 'den':1.}
 	planets = ['mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn']
 	for each in planets:
 		default_vals[each] = copy.deepcopy(default_values)
@@ -488,77 +461,27 @@ def rcalc(E,a,ecc):
 
 
 
-def pl_gen(arg_changes,dir,planetnum=7,skip=[],planets):
+def pl_gen(arg_changes,dir,skip=[],new_worlds=None):
     """generates a tp initial conditions file for SCATR"""
-
-    names,denlist,mass,a,ecc,inc,longper,longasc,meanlong = planet_create()
+    if arg_changes == None:
+    	arg_changes = set_default_args()
+    	
+#    names,denlist,mass,a,ecc,inc,longper,longasc,meanlong = planet_create()
+   # ['name','mass','a','ecc','inc','longper','longasc','meanlong','den']
+    names,mass,a,ecc,inc,longper,longasc,meanlong,denlist = create_planets(arg_changes,new_worlds=new_worlds)
     planetnum = len(names) + 1
-    names = ['JUPITER','SATURN','MERCURY','VENUS','EARTH','MARS']
-    denlist = [1.,1.,3.,3.,3.,3.]
-    mass=np.empty(planetnum)
-    Msun=2.959139768995959e-04
-    mass[0]=Msun*1.0
-
-    a=np.empty(planetnum-1)
-    ecc=np.empty(planetnum-1)
-    inc=np.empty(planetnum-1)
-    longper=np.empty(planetnum-1)
-    longasc=np.empty(planetnum-1)
-    meanlong=np.empty(planetnum-1)
-	#Here is where he selects orbital elements for the planets?    
-    #MERCURY
-    mass[3]=1.660e-7*Msun * arg_changes['mercury']['mass']
-    a[2]=0.3871 * arg_changes['mercury']['a']
-    ecc[2]=0.2056 * arg_changes['mercury']['ecc']
-    inc[2]=7.0049 * arg_changes['mercury']['inc']
-    longper[2]=77.456 * arg_changes['mercury']['longper']
-    longasc[2]=48.3317 * arg_changes['mercury']['longasc']
-    meanlong[2]=252.251 * arg_changes['mercury']['meanlong']
-
-    #VENUS0
-    mass[4]=2.447e-6*Msun * arg_changes['venus']['mass']
-    a[3]=0.7233 * arg_changes['venus']['a']
-    ecc[3]=0.00677 * arg_changes['venus']['ecc']
-    inc[3]=3.3947 * arg_changes['venus']['inc']
-    longper[3]=131.53298 * arg_changes['venus']['longper']
-    longasc[3]=76.6807 * arg_changes['venus']['longasc']
-    meanlong[3]=181.9797 * arg_changes['venus']['meanlong']
-    
-    #EARTH
-    mass[5]=3.002e-6*Msun * arg_changes['earth']['mass']
-    a[4]=1.0 * arg_changes['earth']['a']
-    ecc[4]=0.0167 * arg_changes['earth']['ecc']
-    inc[4]=arg_changes['earth']['inc']
-    longper[4]=102.95 * arg_changes['earth']['longper']
-    longasc[4]=348.74 * arg_changes['earth']['longasc']
-    meanlong[4]=100.46 * arg_changes['earth']['meanlong']
-
-    #MARS
-    mass[6]=3.226e-7*Msun * arg_changes['mars']['mass']
-    a[5]=1.5237 * arg_changes['mars']['a']
-    ecc[5]=0.0934 * arg_changes['mars']['ecc']
-    inc[5]=1.8506 * arg_changes['mars']['inc']
-    longper[5]=336.04 * arg_changes['mars']['longper']
-    longasc[5]=49.579 * arg_changes['mars']['longasc']
-    meanlong[5]=355.4533 * arg_changes['mars']['meanlong']
-
-    #Saturn
-    mass[2]=8.450771312702512e-08 * arg_changes['saturn']['mass']
-    a[1]=9.537 * arg_changes['saturn']['a']
-    ecc[1]=.05415 * arg_changes['saturn']['ecc']
-    inc[1]=2.48466 * arg_changes['saturn']['inc']
-    longper[1]=92.43 * arg_changes['saturn']['longper']
-    longasc[1]=113.7 * arg_changes['saturn']['longasc']
-    meanlong[1]=49.9 * arg_changes['saturn']['meanlong']
-    
-    #Jupiter
-    mass[1]=2.825328644877726e-07 * arg_changes['jupiter']['mass']
-    a[0]=5.203 * arg_changes['jupiter']['a']
-    ecc[0]=0.0488 * arg_changes['jupiter']['ecc']
-    inc[0]=1.305 * arg_changes['jupiter']['inc']
-    longper[0]=14.754 * arg_changes['jupiter']['longper']
-    longasc[0]=100.556 * arg_changes['jupiter']['longasc']
-    meanlong[0]=34.404 * arg_changes['jupiter']['meanlong']
+#    names = ['JUPITER','SATURN','MERCURY','VENUS','EARTH','MARS']
+#    denlist = [1.,1.,3.,3.,3.,3.]
+#    mass=np.empty(planetnum)
+    Msun = mass[0]*1.0
+    #Msun=2.959139768995959e-04
+    #mass[0]=Msun*1.0
+#    a=np.empty(planetnum-1)
+#    ecc=np.empty(planetnum-1)
+#    inc=np.empty(planetnum-1)
+#    longper=np.empty(planetnum-1)
+#    longasc=np.empty(planetnum-1)
+#    meanlong=np.empty(planetnum-1)
     
     inc=inc*math.pi/180.
     longper=longper*math.pi/180.
@@ -570,7 +493,6 @@ def pl_gen(arg_changes,dir,planetnum=7,skip=[],planets):
     eccanom=anomcalc(meananom,ecc)
     angpos=angcalc(eccanom,ecc)
     rpos=rcalc(eccanom,a,ecc)
-
     argper=longper-longasc #see p. 49 of Murray and Dermott
 	#Converting the orbitalelements into actual xyz data 164-201
     #transform into actual positions and velocities
@@ -598,7 +520,7 @@ def pl_gen(arg_changes,dir,planetnum=7,skip=[],planets):
     xdot = -angvel * a * np.sin(angpos) / np.sqrt(1 - ecc**2)
     ydot = angvel * a * (ecc + np.cos(angpos)) / np.sqrt(1 - ecc**2)
     zdot = 0 * angpos
-        
+
     genvelx = np.empty(planetnum)*0.0
     genvely = np.empty(planetnum)*0.0
     genvelz = np.empty(planetnum)*0.0
@@ -692,5 +614,253 @@ def pl_gen(arg_changes,dir,planetnum=7,skip=[],planets):
 
     f.close()
 
-def create_planets():
+def create_planets(arg_changes,new_worlds=None,m_sun=2.959139768995959e-04):
+	"""Generates defaults for the standard worlds"""
+	#Skip was removed from here. with the defaults and a skip list we can yank them out in pl_gen
+	defaults = dict()
+	#load default values
+	names = np.genfromtxt(absw+'jupiter/orbital_defaults.cfg',skip_header=1,dtype=str,usecols=0)
+	bork,mass,a,ecc,inc,longper,longasc,meanlong,den = np.genfromtxt(absw+'jupiter/orbital_defaults.cfg',unpack=True,skip_header=1)
+	#bork is a trash array. Its a meme joke but its easier to pull in the array and trash it then do the annoying code to skip first colum and get all others
+	names = np.array([str.lower(i) for i in names])
+	#Lowercase skip for comparison
+#	if skip != None: skip = [str.lower(i) for i in skip]
 	
+	#Commit these things to dict
+	for i in xrange(len(names)):
+#		if (skip != None) and (str.lower(names[i]) in skip): continue #This skips the planets we don't want
+		temp_dict = dict()
+		temp_dict['mass'] = mass[i] * arg_changes[names[i]]['mass']
+		temp_dict['a'] = a[i] * arg_changes[names[i]]['a']
+		temp_dict['ecc'] = ecc[i] * arg_changes[names[i]]['ecc']
+		temp_dict['inc'] = inc[i] * arg_changes[names[i]]['inc']
+		temp_dict['longper'] = longper[i] * arg_changes[names[i]]['longper']
+		temp_dict['longasc'] = longasc[i] * arg_changes[names[i]]['longasc']
+		temp_dict['meanlong'] = meanlong[i] * arg_changes[names[i]]['meanlong']
+		temp_dict['den'] = den[i] * arg_changes[names[i]]['den']
+		
+		defaults[names[i]] = temp_dict		
+	
+	#This attaches the custom worlds to the defaults keys
+#	if new_worlds != None:
+#		for i in new_worlds.keys():
+#			defaults[i] = new_worlds[i]
+	
+	core_list = list()
+	#Assemble the lists for default worlds
+	for i in names:
+		tmp_list = list()
+		tmp_list.append(i)
+		for j in name_values[1:]:
+			tmp_list.append(defaults[i][j])
+		core_list.append(tmp_list)
+	
+	#Append custom worlds to default worlds
+	#Doing this could probably be done more efficiently but I will adress that later.
+	#This deals with allowing me to do the default worlds IN ORDER in the default file
+	if new_worlds != None:
+		for i in new_worlds.keys():
+			tmp_list = list()
+			tmp_list.append(i)
+			for j in name_values[1:]:
+				tmp_list.append(new_worlds[i][j])
+			core_list.append(tmp_list)
+
+	core_array = np.flipud(np.rot90(np.asarray(core_list)))
+	mass_array = np.empty(len(core_array[1])+1)
+	mass_array[0] = m_sun
+	mass_array[1:] = core_array[1]
+	
+	#Corrects for odd mass notation
+	for i in xrange(len(names)):
+		if ('jupiter' in names[i]) or ('saturn' in names[i]): continue
+		else:
+			mass_array[1+i] = mass_array[1+i] * m_sun
+			
+#	return core_list
+#	core_array[2:] = np.float64(core_array[2:])
+	
+	return core_array[0],mass_array,np.float64(core_array[2]),np.float64(core_array[3]),np.float64(core_array[4]),np.float64(core_array[5]),np.float64(core_array[6]),np.float64(core_array[7]),np.float64(core_array[8])
+	
+
+def create_new_worlds():
+	new_worlds = dict() #holds the new worlds and worlds from file
+	file_writes = list()  #Holds name of loaded worlds to prevent conflicts
+	world_values = ['Name','Mass','Semimajor Axis','Eccentricity','Inclination','Longitude of Pericenter','Longitude of Ascending Node','Mean Anomaly','Density']
+#	name_values = ['name','mass','a','ecc','inc','longper','longasc','meanlong','den']
+	
+	while True:
+		print "\tWorld Creation Menu"
+#		print "If you use custom worlds a record will be created for your worlds when you exit with (2)"
+#		print "Exiting with (3) will discard worlds"
+#		print "Option (4) will generate the records file manualy\n"
+		
+		print "1: Create a new world"
+		print "2: Return to simulation setup with Worlds"
+		print "3: Return to setup WITHOUT Worlds"
+		print "4: Write world record and exit to menu"
+		print "5: Load worlds record"
+		print "0: Exit JUPITER"
+		
+		while True:
+			input_v = input('>')
+			if input_v == 0:
+				return 0,None
+				
+			elif input_v == 1: #create new world
+				temp_holder = dict() #Temp holder data
+				print "World Creation. Please follow the prompts."
+				print "Hit return with no entry to exit at any time"
+				
+				if len(new_worlds) > 0: #If they exist print worlds
+					print "Existing Custom worlds: ",
+					for i in new_worlds:
+						print i,
+					print '\n'
+				
+				print "New world: " #Start new world
+				for i in xrange(len(world_values)): #Start commit loop for new world data
+					value = raw_input(world_values[i]+'>') #Collect user input
+					if value == '': break #If user hits return with no value then break loop
+					elif name_values[i] == 'name': #If entering name data check it is acceptible
+						if len(value) > 8: #Check of length. If too long, fix it.
+							value = value[0:7]
+							print "That name is to long. Truncating to 8 characters."
+						if value in new_worlds: #Check existance
+							print "That name already exists."
+							input_v = 90
+							break #If it does just kick them out
+						name_temp = value #Assign the name
+					else: #If it isnt '' or name add it to the values
+						temp_holder[name_values[i]] = value
+				new_worlds[name_temp] = temp_holder #Commit it to the dictionary for the worlds
+				input_v = 90
+
+			elif input_v == 2: #return to sim setup
+				if len(new_worlds) == 0:
+					print "Returning with no custom worlds."
+					return 77,None
+				else: #If returning with worlds
+					if os.path.isfile(data_out+'custom_worlds.json'): #If custom worlds record exists
+						with open(data_out+'custom_worlds.json') as custom_worlds:
+							custom_load = json.load(custom_worlds)
+						
+						#Create list of conflicts
+						conflicts_raw = list()
+						conflicts = list()
+						for i in new_worlds.keys():
+							if unicode(i) in custom_load.keys():
+								conflicts_raw.append(i)
+						#Establish if conflicts and loads are same
+						for i in conflicts_raw:
+							if i not in file_writes:
+								conflicts.append(i)
+						
+						if len(conflicts) > 0: #Conflicts found
+							print "Conflict found in writting record of custom worlds"
+							print "1: Resolve conflicts and write record"
+							print "2: Do not write record and continue with custom worlds"
+							print "3: Discard worlds and return to JUPITER menu"
+							input_v = input('>')
+							
+							if input_v == 0: #Force exit JUPITER
+								return 0,None
+							elif input_v == 1: #Resolve Conflicts
+								state,new_worlds = custom_duality(new_worlds,custom_load)
+							elif input_v == 2: #Ignore conflicts, no record
+								return 88,new_worlds
+							elif input_v == 3: #Discard all and go home
+								return 77,None
+						else: #No conflicts found
+							#append and write file
+							for i in new_worlds.keys():
+								custom_load[i] = new_worlds[i]
+							with open(data_out+'custom_worlds.json','w') as custom_worlds:
+								json.dump(custom_load,custom_worlds)
+							return 88,new_worlds
+					else:
+					#Write file here
+						#f = open(data_out+'custom_worlds.json','w')
+						with open(data_out+'custom_worlds.json','w') as custom_worlds:
+							json.dump(new_worlds,custom_worlds)
+						#f.close()
+						return 88,new_worlds
+			
+			elif input_v == 3: #Return to setup w/o worlds
+				return 77,None
+				
+			elif input_v == 4: #Write record
+				with open(data_out+'custom_worlds.json') as custom_worlds:
+					json.dump(new_worlds,custom_worlds)
+					
+			elif input_v == 5: #Load worlds from record
+				print "Load worlds from record"
+			else:
+				print "This is not a valid option"
+			if input_v == 90: break #Use this to break loops and reprint main menu
+				
+#def format_planetary_data(worlds,m_sun=2.959139768995959e-04):
+#	world_values = ['Name','Mass','Semimajor Axis','Eccentricity','Inclination','Longitude of Pericenter','Longitude of Ascending Node','Mean Anomaly','Density']
+
+				
+#Conflict resolution				
+#def custom_duality(conflicts,worlds,loads):
+#	print "
+
+
+
+
+    #Here is where he selects orbital elements for the planets?    
+    #MERCURY
+#    mass[3]=1.660e-7*Msun * arg_changes['mercury']['mass']
+#    a[2]=0.3871 * arg_changes['mercury']['a']
+#    ecc[2]=0.2056 * arg_changes['mercury']['ecc']
+#    inc[2]=7.0049 * arg_changes['mercury']['inc']
+#    longper[2]=77.456 * arg_changes['mercury']['longper']
+#    longasc[2]=48.3317 * arg_changes['mercury']['longasc']
+#    meanlong[2]=252.251 * arg_changes['mercury']['meanlong']
+
+    #VENUS0
+#    mass[4]=2.447e-6*Msun * arg_changes['venus']['mass']
+#    a[3]=0.7233 * arg_changes['venus']['a']
+#    ecc[3]=0.00677 * arg_changes['venus']['ecc']
+#    inc[3]=3.3947 * arg_changes['venus']['inc']
+#    longper[3]=131.53298 * arg_changes['venus']['longper']
+#    longasc[3]=76.6807 * arg_changes['venus']['longasc']
+#    meanlong[3]=181.9797 * arg_changes['venus']['meanlong']
+    
+#    #EARTH
+#    mass[5]=3.002e-6*Msun * arg_changes['earth']['mass']
+#    a[4]=1.0 * arg_changes['earth']['a']
+#    ecc[4]=0.0167 * arg_changes['earth']['ecc']
+#    inc[4]=arg_changes['earth']['inc']
+#    longper[4]=102.95 * arg_changes['earth']['longper']
+#    longasc[4]=348.74 * arg_changes['earth']['longasc']
+#    meanlong[4]=100.46 * arg_changes['earth']['meanlong']
+
+    #MARS
+#    mass[6]=3.226e-7*Msun * arg_changes['mars']['mass']
+#    a[5]=1.5237 * arg_changes['mars']['a']
+#    ecc[5]=0.0934 * arg_changes['mars']['ecc']
+#    inc[5]=1.8506 * arg_changes['mars']['inc']
+#    longper[5]=336.04 * arg_changes['mars']['longper']
+#    longasc[5]=49.579 * arg_changes['mars']['longasc']
+#    meanlong[5]=355.4533 * arg_changes['mars']['meanlong']
+
+    #Saturn
+#    mass[2]=8.450771312702512e-08 * arg_changes['saturn']['mass']
+#    a[1]=9.537 * arg_changes['saturn']['a']
+#    ecc[1]=.05415 * arg_changes['saturn']['ecc']
+#    inc[1]=2.48466 * arg_changes['saturn']['inc']
+#    longper[1]=92.43 * arg_changes['saturn']['longper']
+#    longasc[1]=113.7 * arg_changes['saturn']['longasc']
+#    meanlong[1]=49.9 * arg_changes['saturn']['meanlong']
+    
+    #Jupiter
+#    mass[1]=2.825328644877726e-07 * arg_changes['jupiter']['mass']
+#    a[0]=5.203 * arg_changes['jupiter']['a']
+#    ecc[0]=0.0488 * arg_changes['jupiter']['ecc']
+#    inc[0]=1.305 * arg_changes['jupiter']['inc']
+#    longper[0]=14.754 * arg_changes['jupiter']['longper']
+#    longasc[0]=100.556 * arg_changes['jupiter']['longasc']
+#    meanlong[0]=34.404 * arg_changes['jupiter']['meanlong']
