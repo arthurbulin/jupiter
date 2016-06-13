@@ -5,6 +5,7 @@ import os
 import amd_collector as amc
 import plot_base as pb
 import AMDmonitor as amd
+import fmft_run as ffr
 
 absw = lme.lib_get_path('absw')
 data_out = lme.lib_get_path('data_out')
@@ -16,6 +17,7 @@ def main():
 		found_hdf5 = True
 	
 	while True:
+		os.system('clear')
 		#Print menu
 		print 'Jupiter Menu:'
 		if found_hdf5 == False:
@@ -38,24 +40,24 @@ def main():
 				hdf5_lookin = raw_input('>').split(',')
 				print '	Now running HDF5 scan and commit. This may take some time depending on size and number.'
 				state,conflicts = h5b.main(hdf5_lookin) #Return conflicts, not implimented yet
+				delay = raw_input('Hit enter to continue')
 				break
 			elif input_v == 2: #AMD analysis
 				input_v = amd_analysis()
 				break
 			elif input_v == 3: #FMFT analysis
-				input_v = fmft_analysis()
-				print 'option 3'
+				input_v = fmft_main_menu()
+				break
 			elif input_v == 4:
 				print 'option 4'
+				break
 			elif input_v == 5:
 				input_v = sim_gen_main()
 				break
 			else: #Invalid entry handling
 				print 'That is not a valid option'
 	
-			if input_v == 0: break
-				
-		if input_v == 0: break
+		if input_v == 0: return
 
 ##############################################################################################
 #			Simulation generation routines					     #
@@ -82,22 +84,66 @@ def sim_gen_main():
 				sim_name = raw_input("Simulation Name: ")
 				gfb.main()		
 			elif input_v == 3:
-			
+				print "3"
 			elif input_v == 4:
-			
-			elif inpur_v == 5:
+				print "4"
+			elif input_v == 5:
 				return None
 			else:
 				print "That is not a valid option"
 				
-def sim_gen_custom():
-	
-			
-#def fmft_analysis():
-#	while True:
-#		print
-		
 
+##############################################################################################
+#				FMFT OPERATIONS						     #
+##############################################################################################
+#These routines will operate the FMFT
+
+def fmft_main_menu():
+	while True:
+		os.system('clear')
+		#Print menu
+		print '	FMFT Menu'
+		print '1: Run FMFT'
+		print '2: Analyze FMFT - DISABLED'
+		print '3: Exit to Main MENU'
+		print '0: Exit'
+		
+		while True:
+			input_v = input('>') #User input
+
+			#Exit Mercury
+			if input_v == 0: 
+				return 0
+			#Run options
+			elif input_v == 1:
+				not_stored = list()
+				
+				print "Full time period(2) or halfs?(1)"
+				mode_v = input('>')
+				if mode_v == 0: return 0
+				
+				print "Please input simulation names seperated by a comma: "
+				sims = raw_input('>').split(',')
+				
+				#This checks for data not present
+				if do_hdf5 == 'true':
+					sim_stored = h5b.get_keys()
+					for i in xrange(len(sims)):
+						if sims[i] not in sim_stored:
+							not_stored.append(sim[i])
+					if len(not_stored) > 0:
+						print 'These simulations were not found, please find the data'
+						for j in not_stored:
+							print j,
+						break
+						
+				input_v = ffr.main(sims,mode=mode_v)
+				if input_v == 88:
+					print 'Complete, no Errors'
+					break
+			elif input_v == 3:
+				return 77
+				
 ##############################################################################################
 #				AMD ANALYSIS ROUTINES					     #
 ##############################################################################################
@@ -106,6 +152,7 @@ def sim_gen_custom():
 def amd_analysis():
 	"""AMD data analysis"""
 	while True: 
+		os.system('clear')
 		#Print menu
 		print '	AMD Analysis'
 		print '1: Return Peaks'
@@ -179,6 +226,7 @@ def amd_analysis():
 def amd_graphing():
 	"""Graphing features"""
 	while True:
+		os.system('clear')
 		#Print menu
 		print '\tAMD Graphing Menu'
 		print '1: Median Values'
@@ -200,7 +248,7 @@ def amd_graphing():
 			elif input_v == 2:
 				print '\tSets Values Graphing'
 				lookin = raw_input('Enter a single simulation: ')
-				folders = h5b.get_keys(lookin)
+				folders = h5b.get_keys(sim=lookin)
 				folders.sort()
 				
 				time,amd_v = list(),list()
