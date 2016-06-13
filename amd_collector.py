@@ -18,7 +18,7 @@ def main(lookin,peaks=None):
 	for i in xrange(len(lookin)):
 #		print 'For ' + lookin[i]
 		if do_hdf5 =='true':
-			folders = h5b.get_keys(lookin[i]) #returns the 'folders' for the sim set within the hdf5
+			folders = h5b.get_keys(sim=lookin[i]) #returns the 'folders' for the sim set within the hdf5
 		else:
 			folders = lme.lib_get_dir(lookin[i])
 			folders.sort()
@@ -86,7 +86,7 @@ def get_amd_data(lookin):
 def ret_median(sim):
 	#Get my directory structures
 	if do_hdf5 =='true':
-		folders = h5b.get_keys(sim)
+		folders = h5b.get_keys(sim=sim)
 		folders.sort()
 	else:
 		folders = lme.lib_get_dir(sim)
