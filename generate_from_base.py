@@ -622,10 +622,11 @@ def create_planets(arg_changes,new_worlds=None,m_sun=2.959139768995959e-04):
 	names = np.genfromtxt(absw+'jupiter/orbital_defaults.cfg',skip_header=1,dtype=str,usecols=0)
 	bork,mass,a,ecc,inc,longper,longasc,meanlong,den = np.genfromtxt(absw+'jupiter/orbital_defaults.cfg',unpack=True,skip_header=1)
 	#bork is a trash array. Its a meme joke but its easier to pull in the array and trash it then do the annoying code to skip first colum and get all others
-	names = np.array([str.lower(i) for i in names])
+#???	names = np.array([str.lower(i) for i in names])
 	#Lowercase skip for comparison
 #	if skip != None: skip = [str.lower(i) for i in skip]
 	
+	names = [str.lower(i) for i in names]
 	#Commit these things to dict
 	for i in xrange(len(names)):
 #		if (skip != None) and (str.lower(names[i]) in skip): continue #This skips the planets we don't want
@@ -673,7 +674,7 @@ def create_planets(arg_changes,new_worlds=None,m_sun=2.959139768995959e-04):
 	
 	#Corrects for odd mass notation
 	for i in xrange(len(names)):
-		if ('jupiter' in names[i]) or ('saturn' in names[i]): continue
+		if ('JUPITER' in names[i]) or ('SATURN' in names[i]): continue
 		else:
 			mass_array[1+i] = mass_array[1+i] * m_sun
 			
