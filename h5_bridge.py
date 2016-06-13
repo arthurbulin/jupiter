@@ -92,6 +92,7 @@ def assemble_sets(header,bodies,inds,dat,sim,set):
 	data_file = h5.File(data_out+'data.hdf5','a')
 	conflicts = list()
 	same = None
+#	bodies = [str.upper(i) for i in bodies]
 	#Iterate over data
 	for i in xrange(len(bodies)):
 		index = inds[bodies[i]]
@@ -180,23 +181,34 @@ def main(lookin):
 		
 	else: return False,[] #No conflicts at all
 
-def retreive(sim,set,world,value):
+def retreive(sim,set,world,value,mode=0):
 	"""Returns a dataset from our hdf5 file"""
 	f =  h5.File(data_out+filename,'r')
-	try:
-		retreived = f[sim+'/'+set+'/'+world+'/'+value]
-		retreived = np.array(retreived)
-		f.close()
-		return retreived
-	except:
-		print 'WARN: A value for ' + str(sim +'/'+set+'/'+world+'/'+value) + ' does not exist!!!'
-		f.close()
-		return None
-		
-def get_keys(sim,set=None,world=None):
+	if mode == 0:
+		try:
+			try: retreived = f[sim+'/'+set+'/'+world+'/'+value]
+			except KeyError: retreived = f[sim+'/'+set+'/'+str.lower(world)+'/'+value]
+			retreived = np.array(retreived)
+			f.close()
+			return retreived
+		except:
+			print 'WARN: A value for ' + str(sim +'/'+set+'/'+world+'/'+value) + ' does not exist!!!'
+			f.close()
+			return None
+	if mode == 1: #return t,a,e,inc,capom,omega,capm,m
+		basics = ['Time','a','e','i','peri','node','M','mass']
+		basics_got = dict()
+		for value in basics:
+			try: basics_got[value] = np.array(f[sim+'/'+set+'/'+world+'/'+value])
+			except KeyError: basics_got[value] = np.array(f[sim+'/'+set+'/'+str.lower(world)+'/'+value])
+		return basics_got['Time'],basics_got['a'],basics_got['e'],basics_got['i'],basics_got['peri'],basics_got['node'],basics_got['M'],basics_got['mass']
+
+def get_keys(sim=None,set=None,world=None):
 	"""returns the keys in a specific group or subgroup"""
 	f = h5.File(data_out+filename,'r')
-	if set == None and world == None:
+	if sim == None and set == None and world == None:
+		return [str(i) for i in f.keys()]
+	elif set == None and world == None:
 		return [str(i) for i in f[sim].keys()]
 	elif world == None:
 		return [str(i) for i in f[sim+'/'+set].keys()]
