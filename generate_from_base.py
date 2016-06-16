@@ -17,6 +17,8 @@ data_out = lme.lib_get_path('data_out')
 absw = lme.lib_get_path('absw')
 ind_names = lme.lib_ind_names()
 name_values = ['name','mass','a','ecc','inc','longper','longasc','meanlong','den']
+email = lme.lib_get_path('email')
+
 
 ###################################################
 #Ecc and tpo changes for these specific cases
@@ -73,7 +75,19 @@ def main(sim,new_worlds=None,args=None,params=None,skip=[],gen=10,flat_tpo=False
 #		print 'Copied base files to ' + str(i+1)
 		pl_gen(args,'./'+str(i+1),new_worlds=new_worlds)
 #		print 'big.in genereation complete\n'
-
+	
+	print "Generating Condor File"
+	gen_condor(sim,'.',gen)
+	
+	print "Writing initial conditions backup JSON files."
+	with open(str(sim)+"_params.json","w") as f:
+		json.dump(params,f,indent=4)
+	with open(str(sim)+"_args.json","w") as f:
+		json.dump(args,f,indent=4)
+		
+	print "Copying Mercury"
+	os.system("cp "+absw+"jupiter/mod_mercury/mercury6_gr "+"sim"+str(sim)+"_gr")
+	
 	return None,None
 	
 	
@@ -102,7 +116,21 @@ def param_defaults():
 #	Here will be the param and big.in    #
 ##############################################
 
-
+def gen_condor(sim,where,gen):
+	filename = "submission_" + sim + ".condor"
+	f = open(where + "/" + filename,'w')
+	f.write("Universe = vanilla\n")
+	f.write("executable = sim"+sim+"_gr\n")
+	f.write("log = sim"+sim+".log\n")
+	f.write("output = sim"+sim+".out\n")
+	f.write("error = sim"+sim+".error\n")
+	if email != None:
+		f.write("notification = Complete\n")
+		f.write("notify_user = "+email+"\n")
+	for i in xrange(gen):
+		f.write("\ninitialdir = "+str(i)+"\n")
+		f.write("queue\n")
+	f.close()
 
 #Imported from it's own routine
 #Watch out as some values are str and some int but all must be str for writting
@@ -596,7 +624,7 @@ def pl_gen(arg_changes,dir,skip=[],new_worlds=None):
     for j in range(1,planetnum):
 	if names[j-1] in skip: continue
         mass[j] = mass[j]/Msun
-        massing = mass[j]*1.98855e33
+#        massing = mass[j]*1.98855e33
         density = denlist[j-1]
         f.write(names[j-1] + ' m='+str(mass[j])+' r=1.D0 d='+str(density)+'\n')
         
@@ -670,13 +698,22 @@ def create_planets(arg_changes,new_worlds=None,m_sun=2.959139768995959e-04):
 	core_array = np.flipud(np.rot90(np.asarray(core_list)))
 	mass_array = np.empty(len(core_array[1])+1)
 	mass_array[0] = m_sun
-	mass_array[1:] = core_array[1]
-	
+#	tmp_arr = np.array(len(core_array[1]))
+#	for j in xrange(len(core_array[1])):
+#		tmp_arr[j] = core_array[1][j] * m_sun
+	mass_array[1:] = np.float64(core_array[1]) * m_sun
+
+#Test comment out these	
 	#Corrects for odd mass notation
 	for i in xrange(len(names)):
-		if ('JUPITER' in names[i]) or ('SATURN' in names[i]): continue
-		else:
-			mass_array[1+i] = mass_array[1+i] * m_sun
+		if ('JUPITER' in names[i]) or ('SATURN' in names[i]):
+#			mass_array[1+i] =
+
+#		else:
+			mass_array[1+i] = mass_array[1+i] / m_sun
+		elif ('JUPITER' in str.swapcase(names[i])) or ('SATURN' in str.swapcase(names[i])):
+			mass_array[1+i] = mass_array[1+i] / m_sun
+
 			
 #	return core_list
 #	core_array[2:] = np.float64(core_array[2:])
