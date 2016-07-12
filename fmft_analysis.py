@@ -13,6 +13,8 @@ absw = lme.lib_get_path('absw')
 ind_names = lme.lib_ind_names()
 do_hdf5 = lme.lib_get_path('hdf5')
 data_out = lme.lib_get_path('data_out')
+names_default = ['mercury','venus','earth','mars','jupiter','saturn']
+
 
 def main(lookin,worlds):
 	delf_dats = dict()
@@ -73,19 +75,19 @@ def collect_fmft(sim,mode=0):
 	dirs.sort()
 	
 	for i in dirs:
-		data,names,fmft_l = list(),list(),list()
+		data,fmft_l = list(),list()
 		printlines,planets = list(),list()
 		set_dir = os.listdir(dir+i)
-#		print set_dir
 		
 		for j in set_dir:
 			if str(mode)+'.fmft' in j:
 				fmft_l.append(j)
-#		print fmft_l
+		#Redo as a dictionary so that i can try to get it in order
+		names = dict()
 		for j in fmft_l:
 			value,mag,phase = np.genfromtxt(dir+i+'/'+j,unpack=True)
-			names.append(j.split(str(mode))[0])
-			data.append(value)
+			names[j.split(str(mode))[0]] = value
+
 #		names.sort()
 		
 		#TOO MANY DAMN LOOPS, but i'm exhausted and i just want it in order right now. ill fix later
@@ -116,22 +118,46 @@ def collect_fmft(sim,mode=0):
 #					return 66
 #			data.append(value)
 #			
-		dat = np.asarray(data)
-		dat = np.fliplr(np.flipud(np.rot90(dat)))
-		for j in dat:
-			tmp = ''
-			for k in j:
-				tmp = tmp+','+str(k)
-			printlines.append(tmp.split(',',1)[1])
+#COmmenting the following section out for Dict testing
+#
+#		dat = np.asarray(data)
+#		dat = np.fliplr(np.flipud(np.rot90(dat)))
+#		for j in dat:
+#			tmp = ''
+#			for k in j:
+#				tmp = tmp+','+str(k)
+#			printlines.append(tmp.split(',',1)[1])
 		
-		tmp = ''
-		names.reverse()
+#		tmp = ''
+#		names.reverse()
+#		for j in names:
+#			tmp = tmp +','+str(j)
+#		namesprint = tmp.split(',',1)[1]
+#END COMMENT FOR DICT TESTING
+#		names_default = ['mercury','venus','earth','mars','jupiter','saturn']
+#		names_priority = dict()
+		
+		names_s = list()
+		for j in names_default:
+			if j in names:
+				names_s.append(j)
+			elif str.swapcase(j) in names:
+				names_s.append(str.upper(j))
 		for j in names:
-			tmp = tmp +','+str(j)
-		namesprint = tmp.split(',',1)[1]
-		
+			if (j not in names_s) and (str.swapcase(j) not in names_s):
+				names_s.append(j)
+				
+		namesprint = ','.join(names_s)
+		for k in xrange(len(names_s)):
+			tmp = list()
+			for j in names_s:
+				tmp.append(str(names[j][k]))
+			printlines.append(','.join(tmp))
+				
+		#This will create our csv file		
 		f = open(dir+i+'/0_worlds_fmft.csv','w')
 		f.write(namesprint+'\n')
 		for j in printlines:
 			f.write(j+'\n')
 		f.close()
+
