@@ -43,6 +43,9 @@ def lib_get_path(path,mode=0):
 		for i in xrange(len(contents)):
 			if path in contents[i]:
 				gets = contents[i].split(':')[1].split()[0]
+				break
+			else:
+				gets = None
 	return gets
 		
 def lib_read_params():

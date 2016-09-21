@@ -17,6 +17,7 @@ def main(where):
 	list = os.listdir(absw + where)
 	counter,information,selected,planets = {},[],[],[]
 	i = 0
+
 	
 #	folders = len(list)
 	
@@ -61,7 +62,7 @@ def main(where):
 #	print counter	
 
 	for each in counter:
-		counter[each] = format(counter[each] / 10.,'.2f')
+		counter[each] = format(counter[each] / len(list),'.2f')
 
 	sets,final = [],[]
 #Graphing and data output
@@ -77,6 +78,7 @@ def main(where):
 	fin = zip(sets, final)
 	fin.append(counter)
 #	return fin
+
 #	lmi.scribe(fin,"/first_losses_" + where+ ".out",".","wl")
 	
 #	
@@ -84,8 +86,8 @@ def main(where):
 	ax = fig.add_subplot(111)
 	n = len(selected)
 	ax.hist(selected,n)
-#	title = "First instability times for sim " + where
-#	pl.title(title)
+	title = "First instability times for sim " + where
+	pl.title(title)
 	pl.xlabel("Instability Times")
 	pl.ylabel("Count")
 	pl.show()

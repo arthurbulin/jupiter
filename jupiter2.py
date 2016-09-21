@@ -6,6 +6,7 @@ import amd_collector as amc
 import plot_base as pb
 import AMDmonitor as amd
 import fmft_run as ffr
+import generate_from_base as gfb
 
 absw = lme.lib_get_path('absw')
 data_out = lme.lib_get_path('data_out')
@@ -25,7 +26,7 @@ def main():
 	
 		print '1: hdf5 scan'
 		print '2: AMD analysis'
-		print '3: FMFT analysis - DISABLED'
+		print '3: FMFT analysis - Partialy Operational'
 		print '4: Survival analysis - DISABLED'
 		print '5: Simulation setup - DISABLED'
 		print '0: Exit'
@@ -91,8 +92,88 @@ def sim_gen_main():
 				return None
 			else:
 				print "That is not a valid option"
-				
+#Option 2
+def gen_sim(mode=0):
+	if mode == 0:
+	#	args = gfb.set_default_args()
+	#	params = gfb.params_default()
+		input_v,params,name,gen = param_set_menu()
+	#if mode=1:				
+	return input_v,params,name,gen
 
+#Params menu for settings values for ALL SIMULATIONS no matter the choice
+def param_set_menu():
+	params = gfb.param_defaults()
+	while True: #get name and make them do it right
+		name = raw_input("Simulation Name: ")
+		if ' ' in name:
+			print "Don't use spaces, cause idk what'll happen. I didn't plan for them"
+		elif '/' in name:
+			print "No slashes, try again"
+		else:
+			break
+			
+	while True: #Gets number of generations and corrects for non ints
+		gen = raw_input("Number of Simulations: ")
+		try: 
+			gen = int(gen)
+			if gen == 0:
+				print "0 is not valid"
+			else:
+				break
+		except:
+			print "Please enter a useable integer value"
+
+	#get param types
+	param_types = dict()
+	for i in params.keys():
+		param_types[i] = type(params[i])
+
+	os.system('clear')
+	print "Most of these params will not need changed"
+	print "1: will will adjust the basics."
+	print "2: adjust all options"
+	print "3: return without params"
+	print "0: Exit Mercury"
+	
+	while True:
+		input_v = input('> ')
+		
+		if input_v == 0:
+			#return and exit JUPITER
+			return 0,None,None,None
+		elif input_v == 1:
+			do_these = ['timestep','interval','stop','user force']
+			break
+		elif input_v == 2:
+			do_these = param.keys()
+			break
+		elif input_v == 3:
+			#Return to the menu with no params
+			return 77,None,None,None
+		else:
+			print "That is not a valid option"
+	
+	#Get the user's input and make sure it is legit usable
+	for i in xrange(len(do_these)):
+ 		while True:
+	 		print "Setting " + do_these[i]
+ 			print "This must be of type: "+ str(param_types[do_these[i]]).split("'")[1]
+			value = raw_input('> ')
+			if type(value) == param_types[do_these[i]]: #Check its of the right type
+				break
+			else:
+				try: 
+					value = param_types[do_these[i]](value) #Try to cast it to proper type and see if it is input's fault
+					break
+				except: print "Problem with that value\n"
+				
+		params[do_these[i]] = value #Commit value to params
+	
+	return 88,params,name,gen
+				
+				
+				
 ##############################################################################################
 #				FMFT OPERATIONS						     #
 ##############################################################################################
@@ -138,6 +219,7 @@ def fmft_main_menu():
 						break
 						
 				input_v = ffr.main(sims,mode=mode_v)
+				break
 				if input_v == 88:
 					print 'Complete, no Errors'
 					break

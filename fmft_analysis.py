@@ -79,63 +79,15 @@ def collect_fmft(sim,mode=0):
 		printlines,planets = list(),list()
 		set_dir = os.listdir(dir+i)
 		
-		for j in set_dir:
+		for j in set_dir: #CReate a list of FMFTs for the given mode
 			if str(mode)+'.fmft' in j:
 				fmft_l.append(j)
+		
 		#Redo as a dictionary so that i can try to get it in order
 		names = dict()
 		for j in fmft_l:
 			value,mag,phase = np.genfromtxt(dir+i+'/'+j,unpack=True)
-			names[j.split(str(mode))[0]] = value
-
-#		names.sort()
-		
-		#TOO MANY DAMN LOOPS, but i'm exhausted and i just want it in order right now. ill fix later
-#		not_in,names_in = list(),list()
-#		names_default = ['mercury','venus','earth','mars','jupiter','saturn']
-#		for j in names_default:
-#			if str.upper(j) in names:
-#				names_in.append(j)
-#		print 'names'
-#		print names_in
-#		for j in names:
-#			if str.lower(j) not in names_default:
-#				not_in.append(j)
-	
-	##	for j in not_in:		
-	#		names_in.append(j)
-		
-#		if len(not_in) > 0:
-#			for j in not_in:
-#				names_in.append(j)
-#		print names_in
-#		for j in names_in:
-##			try: value,mag,phase = np.genfromtxt(dir+i+'/'+j+str(mode)+'.fmft',unpack=True)
-#			except IOError:
-#				try: value,mag,phase = np.genfromtxt(dir+i+'/'+str.upper(j)+str(mode)+'.fmft',unpack=True)
-#				except:
-#					print "Something odd."
-#					return 66
-#			data.append(value)
-#			
-#COmmenting the following section out for Dict testing
-#
-#		dat = np.asarray(data)
-#		dat = np.fliplr(np.flipud(np.rot90(dat)))
-#		for j in dat:
-#			tmp = ''
-#			for k in j:
-#				tmp = tmp+','+str(k)
-#			printlines.append(tmp.split(',',1)[1])
-		
-#		tmp = ''
-#		names.reverse()
-#		for j in names:
-#			tmp = tmp +','+str(j)
-#		namesprint = tmp.split(',',1)[1]
-#END COMMENT FOR DICT TESTING
-#		names_default = ['mercury','venus','earth','mars','jupiter','saturn']
-#		names_priority = dict()
+			names[j.split("_"+str(mode)+".fmft")[0]] = value
 		
 		names_s = list()
 		for j in names_default:

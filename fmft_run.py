@@ -15,7 +15,7 @@ absw = lme.lib_get_path('absw')
 do_hdf5 = lme.lib_get_path('hdf5')
 data_out = lme.lib_get_path('data_out')
 
-def main(lookin,mode=1):
+def main(lookin,mode=1,interval=None):
 	#Lookin is simulation, mode 1: run for each half, mode 2: run for entire
 	data = dict()
 	for i in xrange(len(lookin)):
@@ -29,12 +29,20 @@ def main(lookin,mode=1):
 			for j in xrange(len(folders)):
 				bodies = h5b.get_keys(sim=lookin[i],set=folders[j])
 				for k in bodies:
-					if mode == 1:
-						call_fmft(lookin[i],folders[j],k,len(bodies),1)
-						call_fmft(lookin[i],folders[j],k,len(bodies),2)
-					if mode == 2:
-						call_fmft(lookin[i],folders[j],k,len(bodies),0)
-			return 88
+					if interval != None:
+						if mode == 1:
+							call_fmft(lookin[i],folders[j],k,len(bodies),1,interval=interval)
+							call_fmft(lookin[i],folders[j],k,len(bodies),2,interval=interval)
+						if mode == 2:
+							call_fmft(lookin[i],folders[j],k,len(bodies),0,interval=interval)
+					
+					else:
+						if mode == 1:
+							call_fmft(lookin[i],folders[j],k,len(bodies),1)
+							call_fmft(lookin[i],folders[j],k,len(bodies),2)
+						if mode == 2:
+							call_fmft(lookin[i],folders[j],k,len(bodies),0)
+	#return 88
 
 		else: #For NON-hdf5 support
 			folders = lme.lib_get_dir(lookin[i])
@@ -51,13 +59,23 @@ def main(lookin,mode=1):
 					if '.aei' in name: bodies.append(name.split(".aei")[0])
 				#Begin data calculations	
 				for thing in bodies:
-					if mode == 1:
-						call_fmft(lookin[i],folders[j],thing,len(bodies),1)
-						call_fmft(lookin[i],folders[j],thing,len(bodies),2)
-					if mode == 2:
-						call_fmft(lookin[i],folders[j],thing,len(bodies),0)
-
-def call_fmft(sim,set,world,nfreq,mode): #where,filename,nfreq,mode):
+					if interval != None:
+						if mode == 1:
+							call_fmft(lookin[i],folders[j],thing,len(bodies),1,interval=interval)
+							call_fmft(lookin[i],folders[j],thing,len(bodies),2,interval=interval)
+						if mode == 2:
+							call_fmft(lookin[i],folders[j],thing,len(bodies),0,interval=interval)
+					
+					else:
+						if mode == 1:
+							call_fmft(lookin[i],folders[j],thing,len(bodies),1)
+							call_fmft(lookin[i],folders[j],thing,len(bodies),2)
+						if mode == 2:
+							call_fmft(lookin[i],folders[j],thing,len(bodies),0)
+	derp = input('Enter to continue')
+	return
+	
+def call_fmft(sim,set,world,nfreq,mode,interval=None): #where,filename,nfreq,mode):
 	#Where am I hiding the source code
 	sourcepath = absw + 'jupiter/fmft/'
 	home_path = os.getcwd()
@@ -73,6 +91,11 @@ def call_fmft(sim,set,world,nfreq,mode): #where,filename,nfreq,mode):
 
 	else:
 		t,a,ecc,inc,omega,capom,capm,m,no = np.genfromtxt(world+".aei", skip_header=4, unpack=True)
+	
+	#Find the slicing index for our interval
+	if interval != None:
+		idx = (np.abs(t-interval)).argmin()
+		t = t[:idx]
 	
 	#Convert from degrees to radians
 	omega = omega * math.pi / 180
@@ -141,8 +164,8 @@ def call_fmft(sim,set,world,nfreq,mode): #where,filename,nfreq,mode):
 	os.system('gcc -c fmft.c')
 	os.system('gcc -o main_fmft main_fmft.c fmft.o nrutil.o -lm')
 	if do_hdf5 == 'true':
-		os.system('./main_fmft < inputfile > '+world+str(mode)+'.fmft')
+		os.system('./main_fmft < inputfile > '+world+"_"+str(mode)+'.fmft')
 	else:
-		os.system('./main_fmft < inputfile > '+world+str(mode)+'.fmft')
+		os.system('./main_fmft < inputfile > '+world+"_"+str(mode)+'.fmft')
 
 	os.chdir(home_path)

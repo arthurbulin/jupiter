@@ -24,34 +24,43 @@ email = lme.lib_get_path('email')
 #Ecc and tpo changes for these specific cases
 #Do not use this in Jupiter as it is a special case                                                        
 ###################################################
-def main(sim,new_worlds=None,args=None,params=None,skip=[],gen=10,flat_tpo=False):
+def main(sim,new_worlds=None,args=None,params=None,gen=10,flat_tpo=False,skip=None):
+	home_dir = os.getcwd() #Commit this to memory so that the GFB script knows where to return to when done
+	#Try to go to our new sim directory.
+	#THis isn't strictly nesessary but I prefer to work in a directory then return home
+	#In the even I need to execute a program in that directory at some point
 	try: os.chdir(absw + sim)
 	except OSError as er:
 		ER = str(er)
-		if ('errno' in str.lower(ER)) and ('2' in ER):
+		if ('errno' in str.lower(ER)) and ('2' in ER): #If a specific error print details
 			print ER
-			print 'Creating Directory at '+absw+sim
-			try: os.mkdir(absw+sim)
-			except:
+			print 'Creating Directory at '+absw+sim 
+			try: os.mkdir(absw+sim) #Try and create the needed directory
+			except: #If that fails something is wrong with perms or your HD is likely full
+				os.chdir(home_dir) #Bring Mark Watney home
 				return 'Error making sim directory',str(absw+sim)
-			os.chdir(absw+sim)
+			os.chdir(absw+sim)#Directory created without exception. Go there.
 
-	#If these must be referenced, a copy is created that way we don't modify relative values
-	#now that I see it I don't think this is necessray. But I will leave it for now.
 	#These are now only called when args and params are fully default
-	if args is None:
-		args = copy.deepcopy(set_default_args()) #Default Args
-	if params is None:
-		params = copy.deepcopy(param_defaults())
+	#Every time the method for defaults is called a new dict is constructed, so value is passed not association
+#	if args is None:
+#		args = set_default_args() #Default Args
+#	if params is None:
+#		params = param_defaults()
 	
-	tp_list = ['mercury','venus','earth','mars'] #Tps
+	#This is outdated and I will integrate it into planetary creation later
+#	tp_list = ['mercury','venus','earth','mars'] #Tps
+#
+#	#Flatten TPOs if True
+#	if flat_tpo == True:
+#		for tps in tp_list:
+#			args[tps]['ecc'] = .001
+#			args[tps]['inc'] = .1
+	#Append the new_worlds onto args
+#	for i in new_worlds.keys():
+#		args[i] = new_worlds[i]
 
-	#Flatten TPOs if True
-	if flat_tpo == True:
-		for tps in tp_list:
-			args[tps]['ecc'] = .001
-			args[tps]['inc'] = .1
-
+	#This will generate the standard folder 0 with all files needed
 	print 'Starting Generation'
 #	Perform copy of base params and generate big.in files for each.             
 #	if os.path.isdir('./0') == True:
@@ -65,28 +74,36 @@ def main(sim,new_worlds=None,args=None,params=None,skip=[],gen=10,flat_tpo=False
 #	print "Made message.in"
 	write_files('./0')
 #	print "Made files.in"
-	pl_gen(args,'./0')
+	pl_gen(args,'./0',new_worlds=new_worlds,skip=skip)
 #	print "Made big.in\n"
 	
+	#THis will make a copy of 0 for each sub run and then create a new big.in with same parameters but different slightly randomly
 	for i in xrange(gen - 1):
 		os.mkdir('./'+str(i+1))
 #		print 'Made ' + str(i+1)
 		os.system('cp ./0/* ./'+str(i+1))
 #		print 'Copied base files to ' + str(i+1)
-		pl_gen(args,'./'+str(i+1),new_worlds=new_worlds)
+		pl_gen(args,'./'+str(i+1),new_worlds=new_worlds,skip=skip)
 #		print 'big.in genereation complete\n'
 	
+	#gens the condor file
 	print "Generating Condor File"
 	gen_condor(sim,'.',gen)
 	
+	#Creates an easily reloadable JSON file with initial params and args
 	print "Writing initial conditions backup JSON files."
-	with open(str(sim)+"_params.json","w") as f:
+	with open("params_"+str(sim)+".json","w") as f:
 		json.dump(params,f,indent=4)
-	with open(str(sim)+"_args.json","w") as f:
+	with open("args_"+str(sim)+".json","w") as f:
 		json.dump(args,f,indent=4)
+	with open("worlds_"+str(sim)+".json","w") as f:
+		json.dump(new_worlds,f,indent=4)
 		
 	print "Copying Mercury"
 	os.system("cp "+absw+"jupiter/mod_mercury/mercury6_gr "+"sim"+str(sim)+"_gr")
+
+	#Return us to starting directory(should be jupiter unless you are using gfb stand alone)
+	os.chdir(home_dir) #Bring Mark Watney home
 	
 	return None,None
 	
@@ -94,20 +111,20 @@ def main(sim,new_worlds=None,args=None,params=None,skip=[],gen=10,flat_tpo=False
 ##############################################
 #	These set my default arguments	     #
 ##############################################
-
-#pulled from another script im working on
+#Generate the default modifies, be aware Earth's modifier is 0 for inc
 def set_default_args():
 	default_vals = dict()
 #	arg_changes = dict()
 	default_values = {'mass':1.,'a':1., 'ecc':1., 'inc':1., 'longper':1., 'longasc':1., 'meanlong':1., 'den':1.}
 	planets = ['mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn']
 	for each in planets:
-		default_vals[each] = copy.deepcopy(default_values)
+		default_vals[each] = copy.deepcopy(default_values) #Don't think deepcopy is need but ill leave it
 	#Earth has an inclination of 0.0, a modifyer would make no sense since 0. This allows for later modification of Earth incl
 	#Without it being set to 0 always
 	default_vals['earth']['inc'] = 0.0 
 	return default_vals
 
+#Fairly explanitory
 def param_defaults():
  	things = {"algorithm":"hyb","start":0,"stop":1.46E+12,"interval":3.6525E+7,"timestep":2,"accuracy":"1.d-12","stop close":"no","allow collisions":"no","fragmentation":"no","express time":"years","relative time":"yes","output precision":"medium","relativity":"no","user force":"no","ejection":100,"radius":0.005,"mass":1.0,"hill":3.,"dumps":50000000,"periodic":100}
 	return things
@@ -115,7 +132,7 @@ def param_defaults():
 ##############################################
 #	Here will be the param and big.in    #
 ##############################################
-
+#This is the condor file generation. Simple and straight forward.
 def gen_condor(sim,where,gen):
 	filename = "submission_" + sim + ".condor"
 	f = open(where + "/" + filename,'w')
@@ -177,6 +194,7 @@ def gen_param(params,where):
  	f.write("number of timesteps between periodic effects = "+ str(params['periodic']) +"\n")
  	f.close()
 
+#Ill add options for small bodies someday but this is pretty worthless for me right now
 def write_small(where):
 	filename = 'small.in'
 	f = open(where + '/' + filename, 'w')
@@ -410,6 +428,11 @@ def write_message(where):
 
 #Originaly from Nate Kaib. Modified for use with Jupiter by Arthur Bulin
 #Feburary 12 2016
+#Modified again. 
+#WARNING. This routine needs a rewrite for the mass work. I accounted for weird mass notation with a fix in one of the
+#later methods. However, my fix didn't account for uppercase vs. lowercase. This gave freaky masses for the jovians.
+#I fixed this to UPPER or lower case will work, but not a mix of both. I will make sure that all user input is cast lowercase.
+#But for now beware 6/17/16
 
 def anomcalc(meananom,ecc):
     """calculates eccentric anomaly from the mean anomaly"""
@@ -489,10 +512,10 @@ def rcalc(E,a,ecc):
 
 
 
-def pl_gen(arg_changes,dir,skip=[],new_worlds=None):
+def pl_gen(arg_changes,dir,new_worlds=None,skip=None):
     """generates a tp initial conditions file for SCATR"""
-    if arg_changes == None:
-    	arg_changes = set_default_args()
+    #if arg_changes == None:
+    #	arg_changes = set_default_args()
     	
 #    names,denlist,mass,a,ecc,inc,longper,longasc,meanlong = planet_create()
    # ['name','mass','a','ecc','inc','longper','longasc','meanlong','den']
@@ -621,8 +644,14 @@ def pl_gen(arg_changes,dir,skip=[],new_worlds=None):
 
 
     #select masses and radii
+#    print names
+ #   print mass
+  #  print mass/Msun
     for j in range(1,planetnum):
-	if names[j-1] in skip: continue
+#    	print range(1,planetnum)
+	if skip != None:
+		if names[j-1] in skip:
+			continue
         mass[j] = mass[j]/Msun
 #        massing = mass[j]*1.98855e33
         density = denlist[j-1]
@@ -644,57 +673,111 @@ def pl_gen(arg_changes,dir,skip=[],new_worlds=None):
 
 def create_planets(arg_changes,new_worlds=None,m_sun=2.959139768995959e-04):
 	"""Generates defaults for the standard worlds"""
+	#Put in possible exception warning
+	if arg_changes == None and new_worlds == None:
+		print "NO input!"
+		print "Anything this spits out with probably fail. Check NewWorlds and arg_changes."
+
 	#Skip was removed from here. with the defaults and a skip list we can yank them out in pl_gen
-	defaults = dict()
-	#load default values
-	names = np.genfromtxt(absw+'jupiter/orbital_defaults.cfg',skip_header=1,dtype=str,usecols=0)
-	bork,mass,a,ecc,inc,longper,longasc,meanlong,den = np.genfromtxt(absw+'jupiter/orbital_defaults.cfg',unpack=True,skip_header=1)
-	#bork is a trash array. Its a meme joke but its easier to pull in the array and trash it then do the annoying code to skip first colum and get all others
-#???	names = np.array([str.lower(i) for i in names])
-	#Lowercase skip for comparison
-#	if skip != None: skip = [str.lower(i) for i in skip]
+	if arg_changes != None:
+		defaults = dict()
+		#load default values
+		names = np.genfromtxt(absw+'jupiter/orbital_defaults.cfg',skip_header=1,dtype=str,usecols=0)
+		bork,mass,a,ecc,inc,longper,longasc,meanlong,den = np.genfromtxt(absw+'jupiter/orbital_defaults.cfg',unpack=True,skip_header=1)
+#		print "Names"
+#		print names
+#		print "MAss"
+#		print mass
+#		print "Mass / sun"
+#		print mass *  m_sun
+
+		#bork is a trash array. Its a meme joke but its easier to pull in the array and trash it then do the annoying code to skip first colum and get all others
+	#???	names = np.array([str.lower(i) for i in names])
+		#Lowercase skip for comparison
+	#	if skip != None: skip = [str.lower(i) for i in skip]
+#		print "685"
+		names = [str.lower(i) for i in names]
+		arg_keys = [str(i) for i in arg_changes.keys()]
+#		print arg_keys
+#		print names
+		#Commit these things to dict
+		for i in xrange(len(names)):
+#			if (names[i] not in arg_keys) and (str.upper(names[i]) not in arg_keys): #This allows us to do a reduced solar system with out key error
+#				print "690"
+#				print names[i]
+#				continue
+#			else:	
+#				print "694-1"
+			temp_dict = dict()
+#				print "694"
+#			print "loop"
+#			print names[i]
+#			print mass[i]
+			temp_dict['mass'] = mass[i] * arg_changes[names[i]]['mass']
+			temp_dict['a'] = a[i] * arg_changes[names[i]]['a']
+			temp_dict['ecc'] = ecc[i] * arg_changes[names[i]]['ecc']
+			temp_dict['inc'] = inc[i] * arg_changes[names[i]]['inc']
+			temp_dict['longper'] = longper[i] * arg_changes[names[i]]['longper']
+			temp_dict['longasc'] = longasc[i] * arg_changes[names[i]]['longasc']
+			temp_dict['meanlong'] = meanlong[i] * arg_changes[names[i]]['meanlong']
+			temp_dict['den'] = den[i] * arg_changes[names[i]]['den']
+#			print "703"
+			defaults[names[i]] = temp_dict		
 	
-	names = [str.lower(i) for i in names]
-	#Commit these things to dict
-	for i in xrange(len(names)):
-#		if (skip != None) and (str.lower(names[i]) in skip): continue #This skips the planets we don't want
-		temp_dict = dict()
-		temp_dict['mass'] = mass[i] * arg_changes[names[i]]['mass']
-		temp_dict['a'] = a[i] * arg_changes[names[i]]['a']
-		temp_dict['ecc'] = ecc[i] * arg_changes[names[i]]['ecc']
-		temp_dict['inc'] = inc[i] * arg_changes[names[i]]['inc']
-		temp_dict['longper'] = longper[i] * arg_changes[names[i]]['longper']
-		temp_dict['longasc'] = longasc[i] * arg_changes[names[i]]['longasc']
-		temp_dict['meanlong'] = meanlong[i] * arg_changes[names[i]]['meanlong']
-		temp_dict['den'] = den[i] * arg_changes[names[i]]['den']
-		
-		defaults[names[i]] = temp_dict		
 	
-	#This attaches the custom worlds to the defaults keys
-#	if new_worlds != None:
-#		for i in new_worlds.keys():
-#			defaults[i] = new_worlds[i]
+		core_list = list()
+#changing the way skip works because it sucks
+#		if skip != None:
+	#		print "skip loop"
+#			key_l = [str(i) for i in defaults.keys()]
+#			for i in xrange(len(skip)):
+	#			print "iter" + str(skip[i])
+#				print skip
+#				print defaults.keys()
+	#			print key_l
+#	#			print i
+#				if skip[i] in key_l:
+	#				print "i1"
+#					defaults.pop(skip[i], None)
+					#del defaults[skip[i]]
+	#				print defaults
+#				elif str.swapcase(skip[i]) in key_l:
+	#				print "i2"
+#					defaults.pop(str.swapcase(skip[i], None))
+#					del defaults[str.upper(skip[i])]
+#				elif str.lower(skip[i]) in key_l:
+#					print "i3"
+#					del defaults[str.lower(skip[i])]
+					
+		#Assemble the lists for default worlds
+	#	print "for loop"
+		for i in names:
+	#		if i in skip: continue
+#			if i not in arg_keys: #This allows us to do a reduced solar system
+#				continue
+			tmp_list = list()
+			tmp_list.append(i)
+			for j in name_values[1:]:
+	#			if j in skip: continue
+				tmp_list.append(defaults[i][j])
+			core_list.append(tmp_list)
 	
-	core_list = list()
-	#Assemble the lists for default worlds
-	for i in names:
-		tmp_list = list()
-		tmp_list.append(i)
-		for j in name_values[1:]:
-			tmp_list.append(defaults[i][j])
-		core_list.append(tmp_list)
-	
+	elif arg_changes == None:
+		core_list = list()
 	#Append custom worlds to default worlds
 	#Doing this could probably be done more efficiently but I will adress that later.
 	#This deals with allowing me to do the default worlds IN ORDER in the default file
+	#print "For 2"
 	if new_worlds != None:
+		new_worlds_keys = [str(i) for i in new_worlds.keys()]
 		for i in new_worlds.keys():
 			tmp_list = list()
 			tmp_list.append(i)
 			for j in name_values[1:]:
 				tmp_list.append(new_worlds[i][j])
 			core_list.append(tmp_list)
-
+#	print core_list
+#	print "err?"
 	core_array = np.flipud(np.rot90(np.asarray(core_list)))
 	mass_array = np.empty(len(core_array[1])+1)
 	mass_array[0] = m_sun
@@ -702,22 +785,43 @@ def create_planets(arg_changes,new_worlds=None,m_sun=2.959139768995959e-04):
 #	for j in xrange(len(core_array[1])):
 #		tmp_arr[j] = core_array[1][j] * m_sun
 	mass_array[1:] = np.float64(core_array[1]) * m_sun
-
+#	print "Core Mass"
+#	print core_array[1]
+#	print "Mass Array!!!"
+#	print mass_array
 #Test comment out these	
+#	print core_array
 	#Corrects for odd mass notation
-	for i in xrange(len(names)):
-		if ('JUPITER' in names[i]) or ('SATURN' in names[i]):
-#			mass_array[1+i] =
-
-#		else:
-			mass_array[1+i] = mass_array[1+i] / m_sun
-		elif ('JUPITER' in str.swapcase(names[i])) or ('SATURN' in str.swapcase(names[i])):
-			mass_array[1+i] = mass_array[1+i] / m_sun
+#	if skip != None:
+#		tmp_l = list()
+#		for i in xrange(len(arg_keys)):
+#			if arg_keys[i] not in skip:
+##				tmp_l.append(arg_keys[i])
+#		arg_keys = tmp_l
+		
+	if arg_changes != None:
+		arg_keys = np.asarray(core_array[0]) 
+		#This resets arg_keys. There is a problem using arg keys like this
+		#it messes with the order and the mass gets out of order
+#		print mass_array
+		for i in xrange(len(arg_keys)):
+			if ('JUPITER' == arg_keys[i]) or ('SATURN' == arg_keys[i]):
+#				print arg_keys[i]
+				mass_array[1+i] = mass_array[1+i] / m_sun
+#				print mass_array[1+i]
+			elif ('jupiter' == arg_keys[i]) or ('saturn' == arg_keys[i]):
+#				print arg_keys[i]
+				mass_array[1+i] = mass_array[1+i] / m_sun
+#				print mass_array[1+i]
 
 			
 #	return core_list
 #	core_array[2:] = np.float64(core_array[2:])
-	
+#	print "Mass Array"
+#	print mass_array
+#	print "Names"
+#	print core_array[0]
+		
 	return core_array[0],mass_array,np.float64(core_array[2]),np.float64(core_array[3]),np.float64(core_array[4]),np.float64(core_array[5]),np.float64(core_array[6]),np.float64(core_array[7]),np.float64(core_array[8])
 	
 
@@ -726,7 +830,14 @@ def create_new_worlds():
 	file_writes = list()  #Holds name of loaded worlds to prevent conflicts
 	world_values = ['Name','Mass','Semimajor Axis','Eccentricity','Inclination','Longitude of Pericenter','Longitude of Ascending Node','Mean Anomaly','Density']
 #	name_values = ['name','mass','a','ecc','inc','longper','longasc','meanlong','den']
-	
+	constraints = {'a': "In AU",
+			'den': '',
+			'ecc': '',
+			'inc': '',
+			'longasc':'',
+			'longper':'',
+			'mass': 'In solar masses',
+			'meanlong':''}
 	while True:
 		print "\tWorld Creation Menu"
 #		print "If you use custom worlds a record will be created for your worlds when you exit with (2)"
@@ -758,20 +869,30 @@ def create_new_worlds():
 				
 				print "New world: " #Start new world
 				for i in xrange(len(world_values)): #Start commit loop for new world data
-					value = raw_input(world_values[i]+'>') #Collect user input
-					if value == '': break #If user hits return with no value then break loop
-					elif name_values[i] == 'name': #If entering name data check it is acceptible
-						if len(value) > 8: #Check of length. If too long, fix it.
-							value = value[0:7]
-							print "That name is to long. Truncating to 8 characters."
-						if value in new_worlds: #Check existance
-							print "That name already exists."
-							input_v = 90
-							break #If it does just kick them out
-						name_temp = value #Assign the name
-					else: #If it isnt '' or name add it to the values
-						temp_holder[name_values[i]] = value
-				new_worlds[name_temp] = temp_holder #Commit it to the dictionary for the worlds
+					while True:
+						value = raw_input(world_values[i]+'>') #Collect user input
+						if value == '': break #If user hits return with no value then break loop
+						elif name_values[i] == 'name': #If entering name data check it is acceptible
+							if len(value) > 8: #Check of length. If too long, fix it.
+								value = value[0:7]
+								print "That name is to long. Truncating to 8 characters."
+							if value in new_worlds: #Check existance
+								print "That name already exists."
+								#break #If it does make them try again
+							else:
+								name_temp = value #Assign the name
+								break
+						else: #If it isnt '' or name add it to the values
+							try: 
+								temp_holder[name_values[i]] = np.float64(value)
+								break
+							except: 
+								print "Bad value. That cannot be cast as a float"
+					if value == '':
+						print "Returning to main menu"
+						break
+				if value != '':
+					new_worlds[name_temp] = temp_holder #Commit it to the dictionary for the worlds
 				input_v = 90
 
 			elif input_v == 2: #return to sim setup
@@ -814,14 +935,14 @@ def create_new_worlds():
 							for i in new_worlds.keys():
 								custom_load[i] = new_worlds[i]
 							with open(data_out+'custom_worlds.json','w') as custom_worlds:
-								json.dump(custom_load,custom_worlds)
+								json.dump(custom_load,custom_worlds,indent=4)
 							return 88,new_worlds
 					else:
 					#Write file here
 						#f = open(data_out+'custom_worlds.json','w')
 						with open(data_out+'custom_worlds.json','w') as custom_worlds:
-							json.dump(new_worlds,custom_worlds)
-						#f.close()
+							json.dump(new_worlds,custom_worlds,indent=4)
+						#f.close(),
 						return 88,new_worlds
 			
 			elif input_v == 3: #Return to setup w/o worlds
@@ -829,13 +950,60 @@ def create_new_worlds():
 				
 			elif input_v == 4: #Write record
 				with open(data_out+'custom_worlds.json') as custom_worlds:
-					json.dump(new_worlds,custom_worlds)
+					json.dump(new_worlds,custom_worlds,indent=4)
 					
 			elif input_v == 5: #Load worlds from record
 				print "Load worlds from record"
 			else:
 				print "This is not a valid option"
 			if input_v == 90: break #Use this to break loops and reprint main menu
+			
+def create_mhr_planets(ainner,npl,mpl,nhill):
+	'''Generates a new_worlds dict for planetary assembly with worlds seperated by Mutual hill radi'''
+	#MPL should be a list or np array
+	Msun = 2.959139768995959e-04
+	Mearth = Msun * 3e-06
+#	massivenum = npl + 1 #Includes the sun
+	
+	worlds = dict()
+	
+	names = list()
+	for i in xrange(npl):
+		names.append('PL'+str(i))
+	
+	#denlist = np.ones(npl)
+	mass = np.empty(npl+1)
+	mass[0] = Msun
+	mass[1:] = np.asarray(mpl) * Mearth
+	a = np.empty(npl)
+	#ecc = np.empty(npl)
+	#inc = np.empty(npl)
+	#longper = np.empty(npl)
+	#longasc = np.empty(npl)
+	#meanlong = np.empty(npl)
+	
+	for i in xrange(npl):
+		if i == 0:
+			a[i] = ainner
+		else:
+			mfactor = ((mass[i+1] + mass[i]) / (3. * Msun))**(1./3.)
+			a[i] = a[i-1] * (1. + nhill/2. * mfactor) / (1. - nhill/2. * mfactor)
+		
+		tmp_d = dict()
+		tmp_d['a'] = a[i]
+		tmp_d['ecc'] = 1e-2 * np.random.random_sample(1)[0]
+		tmp_d['inc'] = 1. * np.random.random_sample(1)[0]
+		for j in ['longper','longasc','meanlong']:
+			tmp_d[j] = 360. * np.random.random_sample(1)[0]
+		tmp_d['den'] = 1.
+		tmp_d['mass'] = mass[i+1] / Msun
+
+		worlds[names[i]] = tmp_d
+	
+	return worlds
+
+#def generate_string(masses,space,start)	
+	
 				
 #def format_planetary_data(worlds,m_sun=2.959139768995959e-04):
 #	world_values = ['Name','Mass','Semimajor Axis','Eccentricity','Inclination','Longitude of Pericenter','Longitude of Ascending Node','Mean Anomaly','Density']
